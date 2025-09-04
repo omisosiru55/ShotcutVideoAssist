@@ -17,7 +17,7 @@ CSV ファイルから字幕を読み込み、指定したプレイリストに�
 1. Download the v1.0.0 release from GitHub  
 2. Extract to any folder  
 3. Requires Python 3.x (tkinter included)  
-
+#
 1. GitHub から v1.0.0 リリースをダウンロード  
 2. 適当なフォルダに解凍  
 3. Python 3.x が必要（tkinter 標準搭載）
@@ -29,7 +29,7 @@ CSV ファイルから字幕を読み込み、指定したプレイリストに�
 ## Launch / 起動方法
 1. Run `VideoAssist.py` with Python  
 2. The following window will appear  
-
+#
 1. 解凍したフォルダ内の `VideoAssist.py` を Python で実行  
 2. 以下のウィンドウが表示されます
 
@@ -87,7 +87,7 @@ CSV ファイルから字幕を読み込み、指定したプレイリストに�
 3. Enter playlist ID (from bottom)  
 4. Click "Add Subtitles"  
 5. Open generated MLT in Shotcut → subtitles appear in specified playlist  
-
+#
 1. 「Input Video File」で既存 MLT ファイルを指定  
 2. 「Subtitles CSV File」で CSV を指定  
 3. 「Playlist ID」を入力（下から数える位置）  

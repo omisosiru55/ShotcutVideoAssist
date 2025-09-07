@@ -20,6 +20,7 @@ Installation
 (if not on PyPI yet, install from GitHub)
 
 git clone [https://github.com/yourname/mltpy.git](https://github.com/omisosiru55/mltpy.git)
+
 cd mltpy
 pip install -e .
 
@@ -69,6 +70,7 @@ Python らしい直感的な API
 （まだPyPI公開前の場合は GitHubインストール例）
 
 git clone [https://github.com/yourname/mltpy.git](https://github.com/omisosiru55/mltpy.git)
+
 cd mltpy
 pip install -e .
 

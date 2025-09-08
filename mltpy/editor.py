@@ -20,7 +20,7 @@ from .exceptions import (
 class MLTEditor:
     """MLTファイルの編集を行うメインクラス"""
     
-    def __init__(self, input_path: Union[str, Path], playlist_id: int = 0):
+    def __init__(self, input_path: Union[str, Path], playlist_id: int = 1):
         """
         MLTエディタを初期化
         
@@ -245,13 +245,16 @@ class MLTEditor:
         except Exception as e:
             raise MLTOutputPathError(f"ファイル保存に失敗しました: {str(e)}", save_path) from e
 
-    def extract_srt_data(self) -> Optional[str]:
+    def extract_srt_data(self) -> Dict[str, str]:
         """
-        MLTファイルからSRT字幕データを抽出
+        MLTファイルからSRT字幕データを抽出（全ての字幕データを取得）
         
         Returns:
-            SRT形式の字幕データ文字列。見つからない場合はNone
+            filter IDをキーとし、SRT形式の字幕データ文字列を値とする辞書
+            見つからない場合は空の辞書
         """
+        srt_data_dict = {}
+        
         # subtitle_feedサービスを持つfilter要素を検索
         for filter_elem in self.mlt_tag.findall(".//filter"):
             # mlt_serviceプロパティを取得
@@ -260,10 +263,87 @@ class MLTEditor:
                 # 同じfilter内のtextプロパティを取得
                 text_elem = filter_elem.find("./property[@name='text']")
                 if text_elem is not None and text_elem.text:
-                    # HTMLエンティティをデコード（&gt; → >）
-                    srt_text = text_elem.text.replace('&gt;', '>')
-                    return srt_text
+                    # filter IDを取得
+                    filter_id = filter_elem.get('id')
+                    if filter_id:
+                        # HTMLエンティティをデコード（&gt; → >）
+                        srt_text = text_elem.text.replace('&gt;', '>')
+                        srt_data_dict[filter_id] = srt_text
         
-        return None
-    
+        if not srt_data_dict:
+            print("字幕データが見つかりませんでした。")
+        else:
+            print(f"{len(srt_data_dict)}個の字幕データが見つかりました。")
+        
+        return srt_data_dict
+
+    def update_srt_data(self, srt_dict: Dict[str, str]):
+        """
+        MLTファイル内のSRT字幕データを更新
+        
+        Args:
+            srt_dict: filter IDをキーとする更新後のSRTデータ辞書
+        """
+        updated_count = 0
+        
+        # subtitle_feedサービスを持つfilter要素を検索
+        for filter_elem in self.mlt_tag.findall(".//filter"):
+            # mlt_serviceプロパティを取得
+            service_elem = filter_elem.find("./property[@name='mlt_service']")
+            if service_elem is not None and service_elem.text == "subtitle_feed":
+                filter_id = filter_elem.get('id')
+                
+                # 対応するSRTデータがある場合は更新
+                if filter_id and filter_id in srt_dict:
+                    text_elem = filter_elem.find("./property[@name='text']")
+                    if text_elem is not None:
+                        # HTMLエンティティをエンコード（> → &gt;）
+                        encoded_text = srt_dict[filter_id].replace('>', '&gt;')
+                        text_elem.text = encoded_text
+                        updated_count += 1
+        
+        print(f"{updated_count}個の字幕データが更新されました。")
+
+    def save_srt_file(self, srt_path: Optional[Union[str, Path]] = None) -> Optional[Dict[str, Path]]:
+        """
+        抽出したSRT字幕データをファイルに保存
+        
+        Args:
+            srt_path: 保存先ディレクトリパス（省略時は入力ファイルと同じディレクトリ）
+            
+        Returns:
+            filter IDをキーとし、保存されたSRTファイルのパスを値とする辞書
+            字幕データが見つからない場合はNone
+            
+        Raises:
+            MLTOutputPathError: ファイル保存に失敗した場合
+        """
+        srt_data_dict = self.extract_srt_data()
+        if not srt_data_dict:
+            return None
+        
+        saved_files = {}
+        
+        if srt_path:
+            save_dir = Path(srt_path)
+            if save_dir.is_file():
+                save_dir = save_dir.parent
+        else:
+            save_dir = self.input_path.parent
+        
+        save_dir.mkdir(parents=True, exist_ok=True)
+        
+        for filter_id, srt_data in srt_data_dict.items():
+            # ファイル名を生成（元ファイル名_filterID.srt）
+            filename = f"{self.input_path.stem}_{filter_id}.srt"
+            save_path = save_dir / filename
+            
+            try:
+                save_path.write_text(srt_data, encoding='utf-8')
+                saved_files[filter_id] = save_path
+                print(f"SRTファイルが {save_path} に保存されました。")
+            except Exception as e:
+                raise MLTOutputPathError(f"SRTファイル保存に失敗しました: {str(e)}", save_path) from e
+        
+        return saved_files
 

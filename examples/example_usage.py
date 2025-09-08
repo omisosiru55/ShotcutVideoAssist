@@ -8,9 +8,9 @@ This example demonstrates:
 3. Saving the modified MLT file
 """
 
-from pathlib import Path
 from mltpy import MLTEditor
 from mltpy.exceptions import MLTFileNotFoundError, MLTParseError
+from mltpy.subtitle_utils import SubtitleUtils
 
 def main():
     # Sample MLT file path (adjust as needed)
@@ -19,15 +19,20 @@ def main():
     try:
         # Create editor instance
         print(f"Loading MLT file: {input_mlt}")
-        editor = MLTEditor(input_mlt, playlist_id=3)
+        editor = MLTEditor(input_mlt, playlist_id=0)
         
         # Set output path
         output_path = editor.set_output_path("edited")
         print(f"Output will be saved to: {output_path}")
         
-        # Get project information
-        width, height = editor.project_size
-        print(f"Project resolution: {width}x{height}")
+        srt_dict = editor.extract_srt_data()
+        wrapped_dict = SubtitleUtils.wrap_srt_lines(srt_dict, max_length=90)
+        #for filter_id, srt_data in wrapped_dict.items():
+        #    print(f"Filter ID: {filter_id}")
+        #    print(srt_data)
+        #    print("---")
+        
+        editor.update_srt_data(wrapped_dict)
         
         # Save the modified MLT file
         print("Saving modified MLT file...")

@@ -35,12 +35,6 @@ class CLIParser:
   
   # CSVから字幕を追加
   mltpy --input-path project.mlt --csv-path subtitles.csv --playlist-id 4
-  
-  # 動画クリップを追加
-  mltpy --input-path project.mlt --add-video video.mp4 --speed 1.5
-  
-  # 画像クリップを追加
-  mltpy --input-path project.mlt --add-image image.jpg --duration 00:00:05.000
             """
         )
         
@@ -79,28 +73,6 @@ class CLIParser:
             '--csv-path',
             type=str,
             help='字幕情報を含むCSVファイルへのパス'
-        )
-        
-        # オプション引数 - メディア追加
-        parser.add_argument(
-            '--add-video',
-            type=str,
-            action='append',
-            help='追加する動画ファイルのパス（複数指定可能）'
-        )
-        
-        parser.add_argument(
-            '--add-image', 
-            type=str,
-            action='append',
-            help='追加する画像ファイルのパス（複数指定可能）'
-        )
-        
-        parser.add_argument(
-            '--add-text',
-            type=str,
-            action='append',
-            help='追加するテキスト（複数指定可能）'
         )
         
         # オプション引数 - メディア設定
@@ -187,24 +159,6 @@ class CLIApp:
             if not csv_path.exists():
                 raise FileNotFoundError(f"CSVファイルが見つかりません: {csv_path}")
         
-        # 動画ファイルの存在確認
-        if self.args.add_video:
-            for video_path in self.args.add_video:
-                path = Path(video_path)
-                if not path.exists():
-                    raise FileNotFoundError(f"動画ファイルが見つかりません: {path}")
-                if not MediaUtils.is_supported_format(path):
-                    raise ValueError(f"サポートされていない動画形式です: {path}")
-        
-        # 画像ファイルの存在確認
-        if self.args.add_image:
-            for image_path in self.args.add_image:
-                path = Path(image_path)
-                if not path.exists():
-                    raise FileNotFoundError(f"画像ファイルが見つかりません: {path}")
-                if not MediaUtils.is_supported_format(path):
-                    raise ValueError(f"サポートされていない画像形式です: {path}")
-        
         # 時間形式の検証
         if not MediaUtils.validate_duration_format(self.args.duration):
             raise ValueError(f"無効な時間形式です: {self.args.duration}")
@@ -234,34 +188,9 @@ class CLIApp:
                 output_path = editor.set_output_path(self.args.output_suffix)
                 self._log(f"出力パス: {output_path}")
             
-            # プロジェクト情報の表示
-            width, height = editor.project_size
-            self._log(f"プロジェクト解像度: {width}x{height}")
-            
             # dry-runモード
             if self.args.dry_run:
                 self._log("DRY-RUNモード: 実際のファイル変更は行いません", force=True)
-            
-            # 動画クリップの追加
-            if self.args.add_video:
-                for video_path in self.args.add_video:
-                    self._log(f"動画クリップ追加: {video_path} (速度: {self.args.speed}x)")
-                    if not self.args.dry_run:
-                        editor.add_video_clip(video_path, speed=self.args.speed)
-            
-            # 画像クリップの追加
-            if self.args.add_image:
-                for image_path in self.args.add_image:
-                    self._log(f"画像クリップ追加: {image_path} (時間: {self.args.duration})")
-                    if not self.args.dry_run:
-                        editor.add_image_clip(image_path, duration=self.args.duration)
-            
-            # テキストオーバーレイの追加
-            if self.args.add_text:
-                for text in self.args.add_text:
-                    self._log(f"テキスト追加: '{text}' (時間: {self.args.duration})")
-                    if not self.args.dry_run:
-                        editor.add_text_overlay(text, duration=self.args.duration)
             
             # CSVから字幕追加（実装は別途必要）
             if self.args.csv_path:

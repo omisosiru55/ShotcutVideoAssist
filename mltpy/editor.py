@@ -9,14 +9,11 @@ from lxml import etree
 import re
 from typing import Optional, Dict, Tuple, Union
 
-from .media import MediaUtils
 from .exceptions import (
     MLTFileNotFoundError,
     MLTParseError,
     MLTPlaylistNotFoundError,
     MLTOutputPathError,
-    MediaFileNotFoundError,
-    InvalidDurationError
 )
 
 
@@ -243,30 +240,6 @@ class MLTEditor:
             producers.append(info)
         
         return producers
-    
-    def remove_producer(self, producer_id: str):
-        """
-        指定されたプロデューサーを削除
-        
-        Args:
-            producer_id: 削除するプロデューサーのID
-            
-        Returns:
-            削除された場合True、見つからない場合False
-        """
-        # プロデューサー要素を検索
-        producer_elem = self.mlt_tag.find(f".//producer[@id='{producer_id}']")
-        if producer_elem is not None:
-            self.mlt_tag.remove(producer_elem)
-            
-            # 対応するエントリーも削除
-            entry_elem = self.playlist_elem.find(f".//entry[@producer='{producer_id}']")
-            if entry_elem is not None:
-                self.playlist_elem.remove(entry_elem)
-            
-            return True
-        
-        return False
     
     def save(self, output_path: Optional[Union[str, Path]] = None):
         """

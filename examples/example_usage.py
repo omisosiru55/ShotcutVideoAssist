@@ -10,15 +10,11 @@ This example demonstrates:
 
 from pathlib import Path
 from mltpy import MLTEditor
+from mltpy.exceptions import MLTFileNotFoundError, MLTParseError
 
 def main():
     # Sample MLT file path (adjust as needed)
     input_mlt = "sample_project.mlt"
-    
-    if not Path(input_mlt).exists():
-        print(f"MLT file not found: {input_mlt}")
-        print("Please create a sample MLT file or adjust the path")
-        return
     
     try:
         # Create editor instance
@@ -57,9 +53,16 @@ def main():
         print("Saving modified MLT file...")
         editor.save()
         print("Done!")
-        
-    except Exception as e:
+
+    except MLTFileNotFoundError as e:
         print(f"Error: {e}")
+        print("Please create a sample MLT file or adjust the path.")
+    except MLTParseError as e:
+        print(f"Error: Could not parse the MLT file. It might be corrupted.")
+        print(f"Details: {e}")
+    except Exception as e:
+        # その他の予期せぬエラー
+        print(f"An unexpected error occurred: {e}")
 
 if __name__ == "__main__":
     main()

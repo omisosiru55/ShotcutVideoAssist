@@ -20,7 +20,7 @@ from .exceptions import (
 class MLTEditor:
     """MLTファイルの編集を行うメインクラス"""
     
-    def __init__(self, input_path: Union[str, Path], playlist_id: int = 4):
+    def __init__(self, input_path: Union[str, Path], playlist_id: int = 0):
         """
         MLTエディタを初期化
         
@@ -222,25 +222,6 @@ class MLTEditor:
         
         return producer_elem, filter_id
     
-    def get_producers_info(self) -> list:
-        """現在のプロデューサー情報を取得"""
-        producers = []
-        for producer in self.mlt_tag.findall(".//producer"):
-            producer_id = producer.get('id')
-            resource_elem = producer.find(".//property[@name='resource']")
-            mlt_service_elem = producer.find(".//property[@name='mlt_service']")
-            
-            info = {
-                'id': producer_id,
-                'resource': resource_elem.text if resource_elem is not None else None,
-                'service': mlt_service_elem.text if mlt_service_elem is not None else None,
-                'in': producer.get('in'),
-                'out': producer.get('out')
-            }
-            producers.append(info)
-        
-        return producers
-    
     def save(self, output_path: Optional[Union[str, Path]] = None):
         """
         MLTファイルを保存
@@ -263,3 +244,26 @@ class MLTEditor:
             print(f"MLTファイルが {save_path} に保存されました。")
         except Exception as e:
             raise MLTOutputPathError(f"ファイル保存に失敗しました: {str(e)}", save_path) from e
+
+    def extract_srt_data(self) -> Optional[str]:
+        """
+        MLTファイルからSRT字幕データを抽出
+        
+        Returns:
+            SRT形式の字幕データ文字列。見つからない場合はNone
+        """
+        # subtitle_feedサービスを持つfilter要素を検索
+        for filter_elem in self.mlt_tag.findall(".//filter"):
+            # mlt_serviceプロパティを取得
+            service_elem = filter_elem.find("./property[@name='mlt_service']")
+            if service_elem is not None and service_elem.text == "subtitle_feed":
+                # 同じfilter内のtextプロパティを取得
+                text_elem = filter_elem.find("./property[@name='text']")
+                if text_elem is not None and text_elem.text:
+                    # HTMLエンティティをデコード（&gt; → >）
+                    srt_text = text_elem.text.replace('&gt;', '>')
+                    return srt_text
+        
+        return None
+    
+

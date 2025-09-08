@@ -9,12 +9,12 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 setup(
     name="mltpy",
     version="0.1.0",
-    author="Your Name",
-    author_email="your.email@example.com",
+    author="Hiroyuki Shimizu",
+    author_email="info@wkimono.tokyo",
     description="Python library for editing MLT files",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/mltpy",
+    url="https://github.com/omisosiru55/mltpy",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 3 - Alpha",

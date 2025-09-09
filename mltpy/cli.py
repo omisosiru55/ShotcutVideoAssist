@@ -44,7 +44,8 @@ class CLIApp:
         self.args = args
     
     def run(self):
-        editor = MLTEditor(self.args.input_path, self.args.playlist_id)
+        editor = MLTEditor(self.args.input_path)
+        editor.wrap_srt_lines()
         editor.save()
 
 def main(args=None):

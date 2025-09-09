@@ -9,6 +9,7 @@ from lxml import etree
 import re
 from typing import Optional, Dict, Tuple, Union
 
+from .subtitle_utils import SubtitleUtils
 from .exceptions import (
     MLTFileNotFoundError,
     MLTParseError,
@@ -20,7 +21,7 @@ from .exceptions import (
 class MLTEditor:
     """MLTファイルの編集を行うメインクラス"""
     
-    def __init__(self, input_path: Union[str, Path], playlist_id: int = 1):
+    def __init__(self, input_path: Union[str, Path], playlist_id: int = 0):
         """
         MLTエディタを初期化
         
@@ -276,6 +277,23 @@ class MLTEditor:
             print(f"{len(srt_data_dict)}個の字幕データが見つかりました。")
         
         return srt_data_dict
+
+    def wrap_srt_lines(self, max_length: int = 90):
+        """
+        MLTファイル内のSRT字幕データの長い行を指定文字数で改行
+        
+        Args:
+            max_length: 1行の最大文字数（デフォルト90文字）
+        """
+        srt_dict = self.extract_srt_data()
+        if not srt_dict:
+            print("字幕データが見つからないため、改行処理は行われません。")
+            return
+        
+        wrapped_dict = SubtitleUtils.wrap_srt_lines(srt_dict, max_length)
+
+        self.update_srt_data(wrapped_dict)
+        print(f"{len(wrapped_dict)}個の字幕データが改行処理されました。")
 
     def update_srt_data(self, srt_dict: Dict[str, str]):
         """

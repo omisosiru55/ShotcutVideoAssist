@@ -28,7 +28,21 @@ class CLIParser:
             help='Wrap long subtitle lines to specified max length / '
                  '長い字幕行を指定した最大長で折り返し処理する'
         )
-        
+
+        parser.add_argument(
+            '--wrap-subtitles-max-length',
+            type=int,
+            default=90,
+            help='Maximum length for wrapped subtitle lines / '
+                 '折り返し処理する字幕行の最大長'
+        )
+
+        parser.add_argument(
+            '--force-wrap',
+            action='store_true',
+            help='Force wrapping lines even without spaces, useful for languages like Chinese / スペースがない言語（中国語など）でも強制的に行を折り返す'
+        )
+
         parser.add_argument(
             '--data-dir',
             type=str,
@@ -45,7 +59,11 @@ class CLIApp:
     
     def run(self):
         editor = MLTEditor(self.args.input_path)
-        editor.wrap_srt_lines()
+
+        if self.args.wrap_subtitles:
+            editor.wrap_srt_lines(max_length=self.args.wrap_subtitles_max_length, force_wrap=self.args.force_wrap)
+            editor.set_output_path("wrapped")
+            
         editor.save()
 
 def main(args=None):

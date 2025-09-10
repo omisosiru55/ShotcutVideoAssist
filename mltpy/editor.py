@@ -24,15 +24,9 @@ class MLTEditor:
     def __init__(self, input_path: Union[str, Path], playlist_id: int = 0):
         """
         Initialize MLT editor / MLTエディタを初期化
-        
         Args:
             input_path: Path to the MLT file to edit / 編集対象のMLTファイルパス
             playlist_id: ID of the playlist to add subtitles / 字幕を追加するプレイリストのID
-            
-        Raises:
-            MLTFileNotFoundError: When MLT file is not found / MLTファイルが見つからない場合
-            MLTParseError: When parsing of MLT file fails / MLTファイルの解析に失敗した場合
-            MLTPlaylistNotFoundError: When the specified playlist is not found / 指定したプレイリストが見つからない場合
         """
         self.input_path = Path(input_path)
         self.playlist_id = playlist_id
@@ -75,15 +69,8 @@ class MLTEditor:
     def set_output_path(self, suffix: str = "edited") -> Path:
         """
         Set output path / 出力パスを設定
-        
-        Args:
-            suffix: Suffix to add to the filename / ファイル名に追加するサフィックス
-            
-        Returns:
-            Configured output path / 設定された出力パス
-            
-        Raises:
-            MLTOutputPathError: If there is a problem with the output path / 出力パスに問題がある場合
+        Args: suffix: Suffix to add to the filename / ファイル名に追加するサフィックス
+        Returns: Configured output path / 設定された出力パス
         """
         self.output_path = self.input_path.with_stem(f"{self.input_path.stem}_{suffix}")
         
@@ -125,113 +112,10 @@ class MLTEditor:
         
         return max_id
     
-    def _add_producer_with_entry(self, file_path: Path, duration: str, 
-                               mlt_service: str, extra_properties: Optional[Dict[str, str]] = None):
-        """Internal method to add producer and entry / プロデューサーとエントリーを追加する内部メソッド"""
-        # Create producer element / プロデューサー要素を作成
-        producer_elem = etree.Element("producer", id=f"producer{self.producer_id_counter}")
-        producer_elem.set("in", "00:00:00.000")
-        producer_elem.set("out", duration)
-        
-        # Resource property / リソースプロパティ
-        if mlt_service == "timewarp":
-            resource_text = f"4:{file_path.as_posix()}"
-        else:
-            resource_text = file_path.as_posix()
-        
-        etree.SubElement(producer_elem, "property", name="resource").text = resource_text
-        etree.SubElement(producer_elem, "property", name="mlt_service").text = mlt_service
-        
-        # Additional properties / 追加プロパティ
-        if extra_properties:
-            for name, value in extra_properties.items():
-                etree.SubElement(producer_elem, "property", name=name).text = value
-        
-        # Add producer / プロデューサーを追加
-        playlist_index = self.mlt_tag.index(self.playlist_elem)
-        self.mlt_tag.insert(playlist_index, producer_elem)
-        
-        # Add entry / エントリーを追加
-        self._add_playlist_entry(self.producer_id_counter, duration)
-        
-        self.producer_id_counter += 1
-    
-    def _add_playlist_entry(self, producer_id: int, duration: str, entry_in: str = "00:00:00.000"):
-        """Add entry to playlist / プレイリストにエントリーを追加"""
-        entry_elem = etree.SubElement(self.playlist_elem, "entry")
-        entry_elem.set("producer", f"producer{producer_id}")
-        entry_elem.set("in", entry_in)
-        entry_elem.set("out", duration)
-        return entry_elem
-    
-    def _create_text_producer(self, producer_id: int, filter_id_start: int, 
-                            text_arg: str, resource: str = "#ffffff"):
-        """Create text producer / テキストプロデューサーを作成"""
-        # Create producer / producer作成
-        producer_elem = etree.Element("producer", id=f"producer{producer_id}")
-        producer_elem.set("in", "00:00:00.000")
-        producer_elem.set("out", "00:01:00.000")
-        
-        # Producer property / producerのproperty
-        etree.SubElement(producer_elem, "property", name="mlt_service").text = "color"
-        etree.SubElement(producer_elem, "property", name="resource").text = resource
-        
-        filter_id = filter_id_start
-        
-        # Affine filter / affineフィルター
-        filter1_elem = etree.SubElement(producer_elem, "filter", id=f"filter{filter_id}")
-        filter1_elem.set("out", "00:01:00.000")
-        
-        filter1_props = {
-            "background": "color:#00000000",
-            "mlt_service": "affine",
-            "shotcut:filter": "affineSizePosition",
-            "transition.fill": "1",
-            "transition.distort": "1",
-            "transition.rect": "0 0 1920 70 1",
-            "transition.valign": "top",
-            "transition.halign": "center"
-        }
-        
-        for name, value in filter1_props.items():
-            etree.SubElement(filter1_elem, "property", name=name).text = value
-        
-        filter_id += 1
-        
-        # Dynamictext filter / dynamictextフィルター
-        filter2_elem = etree.SubElement(producer_elem, "filter", id=f"filter{filter_id}")
-        filter2_elem.set("out", "00:01:00.000")
-        
-        filter2_props = {
-            "argument": text_arg,
-            "geometry": "2 0 1920 270 1",
-            "family": "游明朝",
-            "fgcolour": "#ff272727",
-            "bgcolour": "#00000000",
-            "halign": "left",
-            "valign": "top",
-            "mlt_service": "dynamictext",
-            "shotcut:filter": "dynamicText",
-            "shotcut:pointSize": "40",
-            "shotcut:usePointSize": "1",
-        }
-        
-        for name, value in filter2_props.items():
-            etree.SubElement(filter2_elem, "property", name=name).text = value
-        
-        filter_id += 1
-        
-        return producer_elem, filter_id
-    
     def save(self, output_path: Optional[Union[str, Path]] = None):
         """
         Save MLT file / MLTファイルを保存
-        
-        Args:
-            output_path: Path to save (if omitted, use internal output_path) / 保存先パス（省略時は内部のoutput_pathを使用）
-            
-        Raises:
-            MLTOutputPathError: If output path is not set / 出力パスが設定されていない場合
+        Args: output_path: Path to save (if omitted, use internal output_path) / 保存先パス（省略時は内部のoutput_pathを使用）
         """
         if output_path:
             save_path = Path(output_path)
@@ -249,7 +133,6 @@ class MLTEditor:
     def extract_srt_data(self) -> Dict[str, str]:
         """
         Extract SRT subtitle data from MLT file (get all subtitle data) / MLTファイルからSRT字幕データを抽出（全ての字幕データを取得）
-        
         Returns:
             Dictionary with filter ID as key and SRT string as value / filter IDをキーとし、SRT形式の字幕データ文字列を値とする辞書
             Empty dict if none found / 見つからない場合は空の辞書
@@ -268,8 +151,9 @@ class MLTEditor:
                     filter_id = filter_elem.get('id')
                     if filter_id:
                         # Decode HTML entities (&gt; → >) / HTMLエンティティをデコード（&gt; → >）
-                        srt_text = text_elem.text.replace('&gt;', '>')
-                        srt_data_dict[filter_id] = srt_text
+                        #srt_text = text_elem.text.replace('&gt;', '>')
+                        #srt_data_dict[filter_id] = srt_text
+                        srt_data_dict[filter_id] = text_elem.text
         
         if not srt_data_dict:
             print("No subtitle data found. / 字幕データが見つかりませんでした。")
@@ -278,19 +162,20 @@ class MLTEditor:
         
         return srt_data_dict
 
-    def wrap_srt_lines(self, max_length: int = 90):
+    def wrap_srt_lines(self, max_length: int = 90, force_wrap: bool = False):
         """
         Wrap long lines of SRT subtitles in MLT file at specified length / MLTファイル内のSRT字幕データの長い行を指定文字数で改行
         
         Args:
             max_length: Max characters per line (default 90) / 1行の最大文字数（デフォルト90文字）
+            force_wrap: Force wrapping lines even without spaces, useful for languages like Chinese / スペースがない言語（中国語など）でも強制的に行を折り返す
         """
         srt_dict = self.extract_srt_data()
         if not srt_dict:
             print("No subtitle data found, wrapping skipped. / 字幕データが見つからないため、改行処理は行われません。")
             return
         
-        wrapped_dict = SubtitleUtils.wrap_srt_lines(srt_dict, max_length)
+        wrapped_dict = SubtitleUtils.wrap_srt_lines(srt_dict, max_length, force_wrap)
 
         self.update_srt_data(wrapped_dict)
         print(f"{len(wrapped_dict)} subtitle data entries wrapped. / {len(wrapped_dict)}個の字幕データが改行処理されました。")
@@ -316,8 +201,9 @@ class MLTEditor:
                     text_elem = filter_elem.find("./property[@name='text']")
                     if text_elem is not None:
                         # Encode HTML entities (> → &gt;) / HTMLエンティティをエンコード（> → &gt;）
-                        encoded_text = srt_dict[filter_id].replace('>', '&gt;')
-                        text_elem.text = encoded_text
+                        #encoded_text = srt_dict[filter_id].replace('>', '&gt;')
+                        #text_elem.text = encoded_text
+                        text_elem.text = srt_dict[filter_id]
                         updated_count += 1
         
         print(f"{updated_count} subtitle data entries updated. / {updated_count}個の字幕データが更新されました。")

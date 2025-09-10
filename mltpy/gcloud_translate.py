@@ -8,7 +8,7 @@ class MLTTranslator:
         max_translations: 最大翻訳回数。超えると原文を返す
         """
         self.client = translate.TranslationServiceClient()
-        self.project_id = "cosmic-inkwell-283508"
+        self.project_id = ""
         self.parent = f"projects/{self.project_id}/locations/global"
         self.from_language = from_language
         self.target_language = target_language

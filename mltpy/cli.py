@@ -32,7 +32,7 @@ class CLIParser:
         parser.add_argument(
             '--wrap-subtitles-max-length',
             type=int,
-            default=90,
+            default=None,
             help='Maximum length for wrapped subtitle lines / '
                  '折り返し処理する字幕行の最大長'
         )
@@ -71,7 +71,7 @@ class CLIParser:
             default='ja',
             help='language to translate to'
         )
-        
+
         return parser.parse_args(args)
 
 class CLIApp:
@@ -82,9 +82,14 @@ class CLIApp:
         editor = MLTEditor(self.args.input_path)
 
         if self.args.wrap_subtitles:
-            editor.wrap_srt_lines(max_length=self.args.wrap_subtitles_max_length, force_wrap=self.args.force_wrap)
-            editor.set_output_path("wrapped")
-            
+            if self.args.wrap_subtitles_max_length is None:
+                editor.wrap_srt_lines(force_wrap=self.args.force_wrap)
+                editor.set_output_path("wrapped")
+            else:
+                editor.wrap_srt_lines(max_length=self.args.wrap_subtitles_max_length, force_wrap=self.args.force_wrap)
+                editor.set_output_path(f"wrapped{self.args.wrap_subtitles_max_length}")
+
+
         editor.save()
 
 def main(args=None):

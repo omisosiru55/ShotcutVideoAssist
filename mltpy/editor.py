@@ -10,6 +10,7 @@ import re
 from typing import Optional, Dict, Tuple, Union
 
 from .subtitle_utils import SubtitleUtils
+from .gcloud_translate import MLTTranslator
 from .exceptions import (
     MLTFileNotFoundError,
     MLTParseError,
@@ -130,6 +131,26 @@ class MLTEditor:
         except Exception as e:
             raise MLTOutputPathError(f"File save failed: {str(e)} / ファイル保存に失敗しました: {str(e)}", save_path) from e
 
+    # dynamictextを翻訳する / translate dynamictext
+    def translate_dynamictext(self, from_lang: str = 'en', to_lang: str = 'fr') -> int:
+        
+        translator = MLTTranslator(from_language=from_lang, target_language=to_lang)
+
+        translated_count = 0
+        for producer in self.mlt_tag.findall("producer"):
+            for filter_elem in producer.findall("filter"):
+                if filter_elem.get("mlt_service") == "dynamictext" or filter_elem.find("property[@name='mlt_service']").text == "dynamictext":
+                    for prop in filter_elem.findall("property[@name='argument']"):
+                        original = prop.text
+                        translated = translator.translate_text(original)
+                        prop.text = translated
+                        translated_count += 1
+                        print(f"Translated dynamictext: {original} -> {translated}")
+
+        print(f"Total dynamictext filters translated: {translated_count} / 翻訳されたdynamictextフィルタの総数: {translated_count}")
+        return translated_count
+
+    # 字幕関連のメソッド / Subtitle-related methods
     def extract_srt_data(self) -> Dict[str, str]:
         """
         Extract SRT subtitle data from MLT file (get all subtitle data) / MLTファイルからSRT字幕データを抽出（全ての字幕データを取得）

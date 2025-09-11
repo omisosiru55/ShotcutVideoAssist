@@ -50,6 +50,27 @@ class CLIParser:
             help='Path to data directory for adding clips (default: C:\\data) / '
                  'クリップを追加するデータディレクトリのパス（デフォルト: C:\\data）'
         )
+
+        parser.add_argument(
+            '--translate-dynamictext',
+            action='store_true',
+            help='Translate dynamictext filter arguments using Google Translate / '
+                 'Google翻訳を使ってdynamictextフィルターの引数を翻訳する'
+        )
+
+        parser.add_argument(
+            '--translate-from',
+            type=str,
+            default='en',
+            help='language to translate from'
+        )
+
+        parser.add_argument(
+            '--translate-to',
+            type=str,
+            default='ja',
+            help='language to translate to'
+        )
         
         return parser.parse_args(args)
 

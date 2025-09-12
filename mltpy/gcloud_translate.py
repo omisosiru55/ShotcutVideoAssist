@@ -1,4 +1,5 @@
 from google.cloud import translate
+import os
 
 class MLTTranslator:
     def __init__(self, from_language="auto", target_language="en", max_translations=1000):
@@ -8,12 +9,16 @@ class MLTTranslator:
         max_translations: 最大翻訳回数。超えると原文を返す
         """
         self.client = translate.TranslationServiceClient()
-        self.project_id = ""
+
+        self.project_id = os.getenv("GCLOUD_PROJECT_ID")
+        if not self.project_id:
+            raise ValueError("環境変数 'GCLOUD_PROJECT_ID' が設定されていません。")
+
         self.parent = f"projects/{self.project_id}/locations/global"
         self.from_language = from_language
         self.target_language = target_language
         self.max_translations = max_translations
-        self.translation_count = 0  # 翻訳済みカウント
+        self.translation_count = 0
 
     def translate_text(self, text):
         if not text or not text.strip():
@@ -23,7 +28,6 @@ class MLTTranslator:
         if self.translation_count >= self.max_translations:
             return text
 
-        # 翻訳対象
         request = {
             "parent": self.parent,
             "contents": [text],

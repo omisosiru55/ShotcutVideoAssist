@@ -35,7 +35,7 @@ class SubtitleUtils:
                     wrapped_lines.append(line)
                 else:
                     # 字幕テキスト行を改行処理
-                    wrapped_text_lines = SubtitleUtils._wrap_text_line(line, max_length, force_wrap)
+                    wrapped_text_lines = SubtitleUtils.wrap_text_line(line, max_length, force_wrap)
                     wrapped_lines.extend(wrapped_text_lines)
             
             wrapped_dict[filter_id] = '\n'.join(wrapped_lines)
@@ -43,7 +43,7 @@ class SubtitleUtils:
         return wrapped_dict
 
     @staticmethod
-    def _wrap_text_line(line: str, max_length: int, force_wrap: bool = False) -> List[str]:
+    def wrap_text_line(line: str, max_length: int, force_wrap: bool = False) -> List[str]:
         """
         単一のテキスト行を改行処理
         

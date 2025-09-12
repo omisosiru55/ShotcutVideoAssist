@@ -1,6 +1,8 @@
 
 import argparse
 from .editor import MLTEditor
+from dotenv import load_dotenv
+import os
 
 class CLIParser:
     @staticmethod
@@ -30,12 +32,21 @@ class CLIParser:
         )
 
         parser.add_argument(
-            '--wrap-subtitles-max-length',
+            '--wrap-max-length',
             type=int,
-            default=None,
-            help='Maximum length for wrapped subtitle lines / '
-                 '折り返し処理する字幕行の最大長'
+            default=90,
+            help='Maximum length for wrapped lines / '
+                 '折り返し処理する行の最大長'
         )
+        
+        parser.add_argument(
+            '--wrap-dynamictext',
+            action='store_true',
+            help='Wrap long simple text lines to specified max length / '
+                 '長いシンプルテキストの行を指定した最大長で折り返し処理する'
+        )
+
+
 
         parser.add_argument(
             '--force-wrap',
@@ -82,17 +93,24 @@ class CLIApp:
         editor = MLTEditor(self.args.input_path)
 
         if self.args.wrap_subtitles:
-            if self.args.wrap_subtitles_max_length is None:
-                editor.wrap_srt_lines(force_wrap=self.args.force_wrap)
-                editor.set_output_path("wrapped")
-            else:
-                editor.wrap_srt_lines(max_length=self.args.wrap_subtitles_max_length, force_wrap=self.args.force_wrap)
-                editor.set_output_path(f"wrapped{self.args.wrap_subtitles_max_length}")
+            editor.wrap_srt_lines(max_length=self.args.wrap_max_length, force_wrap=self.args.force_wrap)
 
+        if self.args.wrap_dynamictext:
+            editor.wrap_dynamictext_lines(max_length=self.args.wrap_max_length, force_wrap=self.args.force_wrap)
+
+        if self.args.translate_dynamictext:
+            editor.translate_dynamictext(from_lang=self.args.translate_from, to_lang=self.args.translate_to)
 
         editor.save()
 
 def main(args=None):
+    load_dotenv()  # .envファイルから環境変数を読み込む
+    # GCLOUD_PROJECT_IDが設定されているか確認
+    if not os.getenv("GCLOUD_PROJECT_ID"):
+        print("エラー: 環境変数 GCLOUD_PROJECT_ID が設定されていません。")
+        print(".env ファイルを作成し、GCLOUD_PROJECT_ID='your-project-id' と記述してください。")
+        return # 環境変数がなければ処理を中断
+
     parsed_args = CLIParser.parse_arguments(args)
     app = CLIApp(parsed_args)
     app.run()

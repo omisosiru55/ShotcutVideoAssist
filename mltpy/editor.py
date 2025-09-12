@@ -131,9 +131,32 @@ class MLTEditor:
         except Exception as e:
             raise MLTOutputPathError(f"File save failed: {str(e)} / ファイル保存に失敗しました: {str(e)}", save_path) from e
 
+
+    def wrap_dynamictext_lines(self, max_length: int = 90, force_wrap: bool = False):
+
+        self.set_output_path(f"dynwrapped{max_length}")
+
+        wrapped_count = 0
+        for producer in self.mlt_tag.findall("producer"):
+            for filter_elem in producer.findall("filter"):
+                if filter_elem.get("mlt_service") == "dynamictext" or filter_elem.find("property[@name='mlt_service']").text == "dynamictext":
+                    for prop in filter_elem.findall("property[@name='argument']"):
+                        original = prop.text
+                        wrapped_text_lines = SubtitleUtils.wrap_text_line(original, max_length, force_wrap)
+                        # Join wrapped lines with newline character
+                        wrapped = '\n'.join(wrapped_text_lines)
+                        prop.text = wrapped
+                        wrapped_count += 1
+                        print(f"Wrapped dynamictext: {original} -> {wrapped}")
+
+        print(f"Total dynamictext filters wrapped: {wrapped_count} / 改行されたdynamictextフィルタの総数: {wrapped_count}")
+        return wrapped_count
+
     # dynamictextを翻訳する / translate dynamictext
     def translate_dynamictext(self, from_lang: str = 'en', to_lang: str = 'fr') -> int:
-        
+
+        self.set_output_path(f"dynwrapped{self.args.wrap_max_length}")
+
         translator = MLTTranslator(from_language=from_lang, target_language=to_lang)
 
         translated_count = 0
@@ -191,6 +214,8 @@ class MLTEditor:
             max_length: Max characters per line (default 90) / 1行の最大文字数（デフォルト90文字）
             force_wrap: Force wrapping lines even without spaces, useful for languages like Chinese / スペースがない言語（中国語など）でも強制的に行を折り返す
         """
+        self.set_output_path(f"sbtwrapped{max_length}")
+
         srt_dict = self.extract_srt_data()
         if not srt_dict:
             print("No subtitle data found, wrapping skipped. / 字幕データが見つからないため、改行処理は行われません。")

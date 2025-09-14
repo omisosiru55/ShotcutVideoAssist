@@ -8,6 +8,7 @@ from pathlib import Path
 from lxml import etree
 import re
 from typing import Optional, Dict, Tuple, Union
+import zipfile
 
 from .subtitle_utils import SubtitleUtils
 from .gcloud_translate import MLTTranslator
@@ -130,7 +131,6 @@ class MLTEditor:
             print(f"MLT file saved at {save_path} / MLTファイルが {save_path} に保存されました。")
         except Exception as e:
             raise MLTOutputPathError(f"File save failed: {str(e)} / ファイル保存に失敗しました: {str(e)}", save_path) from e
-
 
     def wrap_dynamictext_lines(self, max_length: int = 90, force_wrap: bool = False):
 
@@ -296,3 +296,39 @@ class MLTEditor:
                 raise MLTOutputPathError(f"SRT file save failed: {str(e)} / SRTファイル保存に失敗しました: {str(e)}", save_path) from e
         
         return saved_files
+
+    # レンダリングサービス用メソッド群 / methods for rendering services
+    def modify_resource_directory(self):
+        # resource プロパティを全て探す
+        for prop in self.mlt_tag.xpath(".//property[@name='resource']"):
+            old_path = prop.text
+            if not old_path:
+                continue
+
+            filename = Path(old_path).name
+
+            # data/xxx に置き換える
+            new_path = Path("data") / filename
+            prop.text = str(new_path)
+
+            self.resources.append(Path(old_path))
+        
+        self.create_data_zip()
+
+        self.set_output_path("renderready")
+
+    def create_data_zip(self, zip_path="data.zip"):
+        """収集したファイルを data.zip にまとめる"""
+        zip_file = Path(zip_path)
+
+        # 既存の data.zip があれば削除
+        if zip_file.exists():
+            zip_file.unlink()
+
+        with zipfile.ZipFile(zip_file, "w", zipfile.ZIP_DEFLATED) as zf:
+            for file in self.resources:
+                if file.exists():
+                    arcname = f"data/{file.name}"  # zip 内の保存パス
+                    zf.write(file, arcname=arcname)
+                else:
+                    print(f"⚠️ ファイルが見つかりません: {file}")            

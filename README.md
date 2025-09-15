@@ -2,7 +2,7 @@
 
 # mltpy
 
-A Python library for editing MLT (Media Lovin' Toolkit) files used by video editing applications like Shotcut and OpenShot.
+A Python library and GUI for editing MLT (Media Lovin' Toolkit) files used by video editing applications like Shotcut and OpenShot.
 
 ## Features
 
@@ -24,7 +24,6 @@ Put the exe file onto any folder of your laptop/machine.
 5. Run to execute.
 6. Check a new file, which will be created at the same folder as the original mlt file.
 
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -37,6 +36,32 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
+# mltpy
+
+MLT（Media Lovin' Toolkit）ファイルを編集するための Python ライブラリ＆GUIツールです。  
+Shotcut や OpenShot などの動画編集アプリケーションで使用できます。
+
+## 特徴
+
+- **一括ラップ機能**: SRTやシンプルなテキスト（dynamictext）を、好みの文字数で自動的に折り返します。
+
+## インストール
+
+exeファイルをパソコン内の任意のフォルダに置いてください。
+
+### 必要環境
+
+- Python 3.8 以上  
+- lxml >= 4.6.0  
+
+## 基本的な使い方
+
+1. 処理オプションから「字幕を折り返す」または「シンプルテキストを折り返す」を選択します。  
+2. 「強制改行」を選ぶと、スペースに関係なく指定の文字数で改行されます。  
+3. デフォルトの文字数を変更したい場合は、改行する文字数を指定してください。  
+4. 対象となる mlt ファイルを選択します。  
+5. 実行を押して処理を開始します。  
+6. 元の mlt ファイルと同じフォルダに新しいファイルが作成されます。  
 
 ## 貢献
 

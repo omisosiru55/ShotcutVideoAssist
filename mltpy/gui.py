@@ -11,7 +11,7 @@ BTN_COLOR = "#175C76"  # アクセント（青系）
 class GUIApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("MLT Editor GUI")
+        self.root.title("Shotcut MLT Toolbox")
         self.root.configure(bg=BG_COLOR)
         self.root.geometry("500x500")
 
@@ -31,22 +31,22 @@ class GUIApp:
         self.playlist_id_var = tk.IntVar(value=0)
         tk.Entry(frame_playlist, textvariable=self.playlist_id_var, width=10).pack(side="left", padx=5)
 
-        # ===== オプション設定エリア =====
-        frame_options = tk.LabelFrame(root, text="オプション", padx=10, pady=10, bg=BG_COLOR, fg=FG_COLOR)
-        frame_options.pack(fill="x", padx=20, pady=10)
+        # ===== 最初の選択肢エリア =====
+        frame_choices = tk.LabelFrame(root, text="処理オプション", padx=10, pady=10, bg=BG_COLOR, fg=FG_COLOR)
+        frame_choices.pack(fill="x", padx=20, pady=10)
 
         self.wrap_subtitles_var = tk.BooleanVar()
-        tk.Checkbutton(frame_options, text="字幕を折り返す", variable=self.wrap_subtitles_var, fg=FG_COLOR, bg=BG_COLOR, selectcolor=BG_COLOR).pack(anchor="w")
+        tk.Checkbutton(frame_choices, text="字幕を折り返す", variable=self.wrap_subtitles_var, fg=FG_COLOR, bg=BG_COLOR, selectcolor=BG_COLOR).pack(anchor="w")
 
         self.wrap_dynamictext_var = tk.BooleanVar()
-        tk.Checkbutton(frame_options, text="dynamictextを折り返す", variable=self.wrap_dynamictext_var, fg=FG_COLOR, bg=BG_COLOR, selectcolor=BG_COLOR).pack(anchor="w")
+        tk.Checkbutton(frame_choices, text="シンプルテキストを折り返す", variable=self.wrap_dynamictext_var, fg=FG_COLOR, bg=BG_COLOR, selectcolor=BG_COLOR).pack(anchor="w")
 
         self.force_wrap_var = tk.BooleanVar()
-        tk.Checkbutton(frame_options, text="強制折り返し", variable=self.force_wrap_var, fg=FG_COLOR, bg=BG_COLOR, selectcolor=BG_COLOR).pack(anchor="w")
+        tk.Checkbutton(frame_choices, text="強制折り返し", variable=self.force_wrap_var, fg=FG_COLOR, bg=BG_COLOR, selectcolor=BG_COLOR).pack(anchor="w")
 
-        tk.Label(frame_options, text="最大長", fg=FG_COLOR, bg=BG_COLOR).pack(anchor="w")
+        tk.Label(frame_choices, text="最大長", fg=FG_COLOR, bg=BG_COLOR).pack(anchor="w")
         self.wrap_max_length_var = tk.IntVar(value=90)
-        tk.Entry(frame_options, textvariable=self.wrap_max_length_var, width=10).pack(anchor="w", pady=5)
+        tk.Entry(frame_choices, textvariable=self.wrap_max_length_var, width=10).pack(anchor="w", pady=5)
 
         # ===== データディレクトリ =====
         frame_data = tk.LabelFrame(root, text="データディレクトリ", padx=10, pady=10, bg=BG_COLOR, fg=FG_COLOR)
@@ -54,21 +54,6 @@ class GUIApp:
 
         self.data_dir_var = tk.StringVar(value=r"C:\\data")
         tk.Entry(frame_data, textvariable=self.data_dir_var, width=40).pack(side="left", padx=5)
-
-        # ===== 翻訳設定エリア =====
-        frame_translate = tk.LabelFrame(root, text="翻訳設定", padx=10, pady=10, bg=BG_COLOR, fg=FG_COLOR)
-        frame_translate.pack(fill="x", padx=20, pady=10)
-
-        self.translate_dynamictext_var = tk.BooleanVar()
-        tk.Checkbutton(frame_translate, text="dynamictextを翻訳", variable=self.translate_dynamictext_var, fg=FG_COLOR, bg=BG_COLOR, selectcolor=BG_COLOR).pack(anchor="w")
-
-        tk.Label(frame_translate, text="翻訳元", fg=FG_COLOR, bg=BG_COLOR).pack(anchor="w")
-        self.translate_from_var = tk.StringVar(value="en")
-        tk.Entry(frame_translate, textvariable=self.translate_from_var, width=10).pack(anchor="w", pady=5)
-
-        tk.Label(frame_translate, text="翻訳先", fg=FG_COLOR, bg=BG_COLOR).pack(anchor="w")
-        self.translate_to_var = tk.StringVar(value="ja")
-        tk.Entry(frame_translate, textvariable=self.translate_to_var, width=10).pack(anchor="w", pady=5)
 
         # ===== 実行ボタン =====
         tk.Button(root, text="実行", bg=BTN_COLOR, fg=FG_COLOR, width=20, height=2, command=self.run).pack(pady=20)
@@ -92,9 +77,6 @@ class GUIApp:
 
             if self.wrap_dynamictext_var.get():
                 editor.wrap_dynamictext_lines(max_length=self.wrap_max_length_var.get(), force_wrap=self.force_wrap_var.get())
-
-            if self.translate_dynamictext_var.get():
-                editor.translate_dynamictext(from_lang=self.translate_from_var.get(), to_lang=self.translate_to_var.get())
 
             editor.save()
             messagebox.showinfo("完了", "処理が完了しました！")

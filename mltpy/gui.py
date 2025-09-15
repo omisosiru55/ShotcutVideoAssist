@@ -15,48 +15,59 @@ class GUIApp:
         self.root.configure(bg=BG_COLOR)
         self.root.geometry("500x500")
 
-        # ===== ファイル選択エリア =====
-        frame_file = tk.LabelFrame(root, text="ファイル選択", padx=10, pady=10, bg=BG_COLOR, fg=FG_COLOR)
+
+        # ===== Processing Options Area =====
+        frame_choices = tk.LabelFrame(root, text="Processing Options / 処理オプション", padx=10, pady=10, bg=BG_COLOR, fg=FG_COLOR)
+        frame_choices.pack(fill="x", padx=20, pady=10)
+
+        # ラジオボタン用の共有変数
+        self_wrap_var = tk.StringVar(value="wrap_subtitles")
+
+        # ラジオボタンの作成
+        tk.Radiobutton(frame_choices, text="Wrap Subtitles / 字幕を折り返す", variable=self_wrap_var, value="wrap_subtitles", fg=FG_COLOR, bg=BG_COLOR, selectcolor=BG_COLOR).pack(anchor="w")
+        tk.Radiobutton(frame_choices, text="Wrap Simple Text / シンプルテキストを折り返す", variable=self_wrap_var, value="wrap_dynamictext", fg=FG_COLOR, bg=BG_COLOR, selectcolor=BG_COLOR).pack(anchor="w")
+
+        # --- Details Options LabelFrame ---
+        # Create a single LabelFrame to hold all the detail-related widgets.
+        frame_details = tk.LabelFrame(root, text="Details Options / 詳細オプション", padx=10, pady=10, bg=BG_COLOR, fg=FG_COLOR)
+        frame_details.pack(fill="x", padx=20, pady=10)
+
+        # --- Force Wrap Checkbutton ---
+        # This widget will be on the first line inside the frame.
+        self_force_wrap_var = tk.BooleanVar()
+        tk.Checkbutton(frame_details, text="Force Wrap / 強制折り返し", variable=self_force_wrap_var, fg=FG_COLOR, bg=BG_COLOR, selectcolor=BG_COLOR).pack(anchor="w")
+
+        # --- Max Length Label and Entry (on a single line) ---
+        # Create a new Frame to group the label and entry horizontally.
+        input_frame = tk.Frame(frame_details, bg=BG_COLOR)
+        input_frame.pack(anchor="w", pady=(5, 0)) # Add a little padding at the top
+
+        # Place the Label on the left side of the input_frame.
+        tk.Label(input_frame, text="Max Length / 最大長", fg=FG_COLOR, bg=BG_COLOR).pack(side="left", padx=(0, 10))
+
+        # Place the Entry next to the Label.
+        self_wrap_max_length_var = tk.IntVar(value=90)
+        tk.Entry(input_frame, textvariable=self_wrap_max_length_var, width=10).pack(side="left")
+
+
+        # ===== File Selection Area =====
+        frame_file = tk.LabelFrame(root, text="File Selection / ファイル選択", padx=10, pady=10, bg=BG_COLOR, fg=FG_COLOR)
         frame_file.pack(fill="x", padx=20, pady=10)
 
         self.input_path_var = tk.StringVar()
         tk.Entry(frame_file, textvariable=self.input_path_var, width=40).pack(side="left", padx=5)
-        tk.Button(frame_file, text="参照", bg=BTN_COLOR, fg=FG_COLOR, command=self.browse_file).pack(side="left")
+        tk.Button(frame_file, text="Browse / 参照", bg=BTN_COLOR, fg=FG_COLOR, command=self.browse_file).pack(side="left")
 
-        # ===== プレイリスト設定エリア =====
-        frame_playlist = tk.LabelFrame(root, text="プレイリスト設定", padx=10, pady=10, bg=BG_COLOR, fg=FG_COLOR)
+        # ===== Playlist Settings Area =====
+        frame_playlist = tk.LabelFrame(root, text="Playlist Settings / プレイリスト設定", padx=10, pady=10, bg=BG_COLOR, fg=FG_COLOR)
         frame_playlist.pack(fill="x", padx=20, pady=10)
 
-        tk.Label(frame_playlist, text="プレイリストID", fg=FG_COLOR, bg=BG_COLOR).pack(side="left")
+        tk.Label(frame_playlist, text="Playlist ID / プレイリストID", fg=FG_COLOR, bg=BG_COLOR).pack(side="left")
         self.playlist_id_var = tk.IntVar(value=0)
         tk.Entry(frame_playlist, textvariable=self.playlist_id_var, width=10).pack(side="left", padx=5)
 
-        # ===== 最初の選択肢エリア =====
-        frame_choices = tk.LabelFrame(root, text="処理オプション", padx=10, pady=10, bg=BG_COLOR, fg=FG_COLOR)
-        frame_choices.pack(fill="x", padx=20, pady=10)
-
-        self.wrap_subtitles_var = tk.BooleanVar()
-        tk.Checkbutton(frame_choices, text="字幕を折り返す", variable=self.wrap_subtitles_var, fg=FG_COLOR, bg=BG_COLOR, selectcolor=BG_COLOR).pack(anchor="w")
-
-        self.wrap_dynamictext_var = tk.BooleanVar()
-        tk.Checkbutton(frame_choices, text="シンプルテキストを折り返す", variable=self.wrap_dynamictext_var, fg=FG_COLOR, bg=BG_COLOR, selectcolor=BG_COLOR).pack(anchor="w")
-
-        self.force_wrap_var = tk.BooleanVar()
-        tk.Checkbutton(frame_choices, text="強制折り返し", variable=self.force_wrap_var, fg=FG_COLOR, bg=BG_COLOR, selectcolor=BG_COLOR).pack(anchor="w")
-
-        tk.Label(frame_choices, text="最大長", fg=FG_COLOR, bg=BG_COLOR).pack(anchor="w")
-        self.wrap_max_length_var = tk.IntVar(value=90)
-        tk.Entry(frame_choices, textvariable=self.wrap_max_length_var, width=10).pack(anchor="w", pady=5)
-
-        # ===== データディレクトリ =====
-        frame_data = tk.LabelFrame(root, text="データディレクトリ", padx=10, pady=10, bg=BG_COLOR, fg=FG_COLOR)
-        frame_data.pack(fill="x", padx=20, pady=10)
-
-        self.data_dir_var = tk.StringVar(value=r"C:\\data")
-        tk.Entry(frame_data, textvariable=self.data_dir_var, width=40).pack(side="left", padx=5)
-
-        # ===== 実行ボタン =====
-        tk.Button(root, text="実行", bg=BTN_COLOR, fg=FG_COLOR, width=20, height=2, command=self.run).pack(pady=20)
+        # ===== Execution Button =====
+        tk.Button(root, text="Run / 実行", bg=BTN_COLOR, fg=FG_COLOR, width=20, height=2, command=self.run).pack(pady=20)
 
     def browse_file(self):
         file_path = filedialog.askopenfilename(filetypes=[("MLT files", "*.mlt")])

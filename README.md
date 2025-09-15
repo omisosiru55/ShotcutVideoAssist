@@ -1,3 +1,5 @@
+<img width="494" height="413" alt="image" src="https://github.com/user-attachments/assets/9dfe8255-a713-4b78-bebf-a6b59b75f867" />
+
 # mltpy
 
 A Python library for editing MLT (Media Lovin' Toolkit) files used by video editing applications like Shotcut and OpenShot.
@@ -15,6 +17,12 @@ Put the exe file onto any folder of your laptop/machine.
 - lxml >= 4.6.0
 
 ### Basic Usage
+1. Wrap Subtitles or rap Simple Text from rocessing Options.
+2. Choose Force Wrap if you want to make a new line regardless of space.
+3. Specify character number if you want to change the default till this tool make a new line.
+4. Choose your mlt file.
+5. Run to execute.
+6. Check a new file, which will be created at the same folder as the original mlt file.
 
 
 ## License

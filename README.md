@@ -31,6 +31,7 @@ Bash
 
 pip install pyinstaller
 pyinstaller --onefile --noconsole -n ShotcutMLTToolbox mltpy/gui.py
+
 Once the build is complete, the executable file will be generated in the dist directory.
 
 ## License
@@ -79,6 +80,7 @@ Bash
 
 pip install pyinstaller
 pyinstaller --onefile --noconsole -n ShotcutMLTToolbox mltpy/gui.py
+
 ビルドが完了すると、dist ディレクトリ内に実行ファイルが生成されます。
 
 ## 貢献

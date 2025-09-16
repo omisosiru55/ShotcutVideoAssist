@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from dotenv import load_dotenv
 import os
-from .editor import MLTEditor
+from mltpy.editor import MLTEditor
 
 BG_COLOR = "#323232"   # 背景（濃いグレー）
 FG_COLOR = "#E2E2E2"   # テキスト（白）

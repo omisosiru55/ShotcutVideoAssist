@@ -24,6 +24,15 @@ Put the exe file onto any folder of your laptop/machine.
 5. Run to execute.
 6. Check a new file, which will be created at the same folder as the original mlt file.
 
+### How to Build
+This application can be built using pyinstaller.
+
+Bash
+
+pip install pyinstaller
+pyinstaller --onefile --noconsole -n ShotcutMLTToolbox mltpy/gui.py
+Once the build is complete, the executable file will be generated in the dist directory.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -62,6 +71,15 @@ exeファイルをパソコン内の任意のフォルダに置いてくださ�
 4. 対象となる mlt ファイルを選択します。  
 5. 実行を押して処理を開始します。  
 6. 元の mlt ファイルと同じフォルダに新しいファイルが作成されます。  
+
+## ビルド方法
+このアプリケーションは pyinstaller を使用してビルドできます。
+
+Bash
+
+pip install pyinstaller
+pyinstaller --onefile --noconsole -n ShotcutMLTToolbox mltpy/gui.py
+ビルドが完了すると、dist ディレクトリ内に実行ファイルが生成されます。
 
 ## 貢献
 

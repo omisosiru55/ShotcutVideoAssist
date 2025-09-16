@@ -13,19 +13,18 @@ class GUIApp:
         self.root = root
         self.root.title("Shotcut MLT Toolbox")
         self.root.configure(bg=BG_COLOR)
-        self.root.geometry("500x500")
-
+        self.root.geometry("500x400")
 
         # ===== Processing Options Area =====
         frame_choices = tk.LabelFrame(root, text="Processing Options / 処理オプション", padx=10, pady=10, bg=BG_COLOR, fg=FG_COLOR)
         frame_choices.pack(fill="x", padx=20, pady=10)
 
         # ラジオボタン用の共有変数
-        self_wrap_var = tk.StringVar(value="wrap_subtitles")
+        self.wrap_choice_var = tk.StringVar(value="wrap_subtitles")
 
         # ラジオボタンの作成
-        tk.Radiobutton(frame_choices, text="Wrap Subtitles / 字幕を折り返す", variable=self_wrap_var, value="wrap_subtitles", fg=FG_COLOR, bg=BG_COLOR, selectcolor=BG_COLOR).pack(anchor="w")
-        tk.Radiobutton(frame_choices, text="Wrap Simple Text / シンプルテキストを折り返す", variable=self_wrap_var, value="wrap_dynamictext", fg=FG_COLOR, bg=BG_COLOR, selectcolor=BG_COLOR).pack(anchor="w")
+        tk.Radiobutton(frame_choices, text="Wrap Subtitles / 字幕を折り返す", variable=self.wrap_choice_var, value="wrap_subtitles", fg=FG_COLOR, bg=BG_COLOR, selectcolor=BG_COLOR).pack(anchor="w")
+        tk.Radiobutton(frame_choices, text="Wrap Simple Text / シンプルテキストを折り返す", variable=self.wrap_choice_var, value="wrap_dynamictext", fg=FG_COLOR, bg=BG_COLOR, selectcolor=BG_COLOR).pack(anchor="w")
 
         # --- Details Options LabelFrame ---
         # Create a single LabelFrame to hold all the detail-related widgets.
@@ -34,8 +33,8 @@ class GUIApp:
 
         # --- Force Wrap Checkbutton ---
         # This widget will be on the first line inside the frame.
-        self_force_wrap_var = tk.BooleanVar()
-        tk.Checkbutton(frame_details, text="Force Wrap / 強制折り返し", variable=self_force_wrap_var, fg=FG_COLOR, bg=BG_COLOR, selectcolor=BG_COLOR).pack(anchor="w")
+        self.force_wrap_var = tk.BooleanVar()
+        tk.Checkbutton(frame_details, text="Force Wrap / 強制折り返し", variable=self.force_wrap_var, fg=FG_COLOR, bg=BG_COLOR, selectcolor=BG_COLOR).pack(anchor="w")
 
         # --- Max Length Label and Entry (on a single line) ---
         # Create a new Frame to group the label and entry horizontally.
@@ -46,8 +45,8 @@ class GUIApp:
         tk.Label(input_frame, text="Max Length / 最大長", fg=FG_COLOR, bg=BG_COLOR).pack(side="left", padx=(0, 10))
 
         # Place the Entry next to the Label.
-        self_wrap_max_length_var = tk.IntVar(value=90)
-        tk.Entry(input_frame, textvariable=self_wrap_max_length_var, width=10).pack(side="left")
+        self.wrap_max_length_var = tk.IntVar(value=90)
+        tk.Entry(input_frame, textvariable=self.wrap_max_length_var, width=10).pack(side="left")
 
 
         # ===== File Selection Area =====
@@ -57,14 +56,6 @@ class GUIApp:
         self.input_path_var = tk.StringVar()
         tk.Entry(frame_file, textvariable=self.input_path_var, width=40).pack(side="left", padx=5)
         tk.Button(frame_file, text="Browse / 参照", bg=BTN_COLOR, fg=FG_COLOR, command=self.browse_file).pack(side="left")
-
-        # ===== Playlist Settings Area =====
-        frame_playlist = tk.LabelFrame(root, text="Playlist Settings / プレイリスト設定", padx=10, pady=10, bg=BG_COLOR, fg=FG_COLOR)
-        frame_playlist.pack(fill="x", padx=20, pady=10)
-
-        tk.Label(frame_playlist, text="Playlist ID / プレイリストID", fg=FG_COLOR, bg=BG_COLOR).pack(side="left")
-        self.playlist_id_var = tk.IntVar(value=0)
-        tk.Entry(frame_playlist, textvariable=self.playlist_id_var, width=10).pack(side="left", padx=5)
 
         # ===== Execution Button =====
         tk.Button(root, text="Run / 実行", bg=BTN_COLOR, fg=FG_COLOR, width=20, height=2, command=self.run).pack(pady=20)
@@ -83,10 +74,10 @@ class GUIApp:
         try:
             editor = MLTEditor(self.input_path_var.get())
 
-            if self.wrap_subtitles_var.get():
+            choice = self.wrap_choice_var.get()
+            if choice == "wrap_subtitles":
                 editor.wrap_srt_lines(max_length=self.wrap_max_length_var.get(), force_wrap=self.force_wrap_var.get())
-
-            if self.wrap_dynamictext_var.get():
+            elif choice == "wrap_dynamictext":
                 editor.wrap_dynamictext_lines(max_length=self.wrap_max_length_var.get(), force_wrap=self.force_wrap_var.get())
 
             editor.save()

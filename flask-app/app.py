@@ -8,6 +8,7 @@ import string
 import re
 import xml.etree.ElementTree as ET
 from functools import wraps
+import time
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 60 * 1024 * 1024 * 1024  # 60GBまでOK
@@ -106,9 +107,17 @@ def render_with_progress(mlt_file, output_file, uid):
     cmd = ["xvfb-run", "-a", "/usr/bin/melt", str(mlt_file), "-progress", "-consumer", f"avformat:{output_file}"]
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 
+    last_log_time = 0
+    last_progress_time = 0
+    
     for line in proc.stdout:
         line = line.strip()
-        print(f"Melt output: {line}")  # デバッグ用
+        current_time = time.time()
+        
+        # デバッグログは1秒間隔で制限
+        if current_time - last_log_time >= 1.0:
+            print(f"Melt output: {line}")
+            last_log_time = current_time
         
         # 複数のパターンでCurrent Positionを取得
         patterns = [
@@ -123,8 +132,12 @@ def render_with_progress(mlt_file, output_file, uid):
             if m:
                 current_pos = int(m.group(1))
                 progress_dict[uid]['current'] = current_pos
-                progress_pct = int(current_pos/total_frames*100) if total_frames > 0 else 0
-                print(f"Progress: {current_pos}/{total_frames} ({progress_pct}%)")
+                
+                # 進捗ログも1秒間隔で制限
+                if current_time - last_progress_time >= 1.0:
+                    progress_pct = int(current_pos/total_frames*100) if total_frames > 0 else 0
+                    print(f"Progress: {current_pos}/{total_frames} ({progress_pct}%)")
+                    last_progress_time = current_time
                 break
 
     proc.wait()

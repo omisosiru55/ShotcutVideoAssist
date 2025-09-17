@@ -154,7 +154,7 @@ def process_file(filepath: Path, unique_id: str):
 
         # meltコマンドでレンダリング（進行状況付き）
         output_file = extract_dir / "output.mp4"
-        mlt_file = extract_dir / "test1.mlt"
+        mlt_file = extract_dir / "cloud_rendering.mlt"
         
         if not mlt_file.exists():
             raise FileNotFoundError(f"MLT file not found: {mlt_file}")

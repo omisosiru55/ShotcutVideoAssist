@@ -5,6 +5,7 @@ from typing import Dict, Tuple, Optional
 import zipfile
 import shutil
 import requests
+from .config import CLOUD_RENDER_BASE_URL
 import xml.etree.ElementTree as ET
 
 
@@ -87,11 +88,14 @@ class MLTDataPackager:
 
         return self.zip_path
 
-    def upload(self, url: str = "http://wkimono.home/upload", timeout: int = 60) -> Tuple[int, str]:
+    def upload(self, url: str | None = None, timeout: int = 60) -> Tuple[int, str]:
         """生成済み ZIP を指定URLへPOSTする。戻り値は (status_code, text)。"""
         if not self.zip_path.exists():
             raise FileNotFoundError("data.zip is not prepared. Call prepare_zip() first.")
 
+        if url is None:
+            url = f"{CLOUD_RENDER_BASE_URL}/upload"
+        print(f"Uploading to {url}")
         headers = {
             "X-Filename": self.zip_path.name,
             "Content-Type": "application/octet-stream",

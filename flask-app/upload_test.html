@@ -52,12 +52,69 @@
         try { parsed = JSON.parse(text); } catch (_) { parsed = text; }
 
         log.textContent = `Status: ${res.status}\n\nResponse:\n${typeof parsed === 'string' ? parsed : JSON.stringify(parsed, null, 2)}`;
+
+        // プログレスページへのリンクを表示（unique_id付き）
+        if (res.ok && parsed && parsed.unique_id) {
+          const baseUrl = serverUrl.replace('/upload', '');
+          const progressUrl = `${baseUrl}/progress_test?id=${encodeURIComponent(parsed.unique_id)}`;
+          const linkHtml = `\n\n<a href="${progressUrl}" target="_blank" style="color:#4CAF50;">🔎 進行状況を見る（ID: ${parsed.unique_id}）</a>`;
+          log.innerHTML = log.textContent.replace(/\n/g, '<br>') + linkHtml;
+        }
+        
+        // アップロード成功後、ファイル一覧を更新
+        if (res.status === 200) {
+          await loadFileList();
+        }
       } catch (err) {
         log.textContent = `エラー: ${err}`;
       } finally {
         btn.disabled = false;
       }
     }
+
+    async function loadFileList() {
+      const serverUrlInput = document.getElementById('serverUrl');
+      const fileListDiv = document.getElementById('fileList');
+      
+      const baseUrl = serverUrlInput.value.replace('/upload', '');
+      
+      try {
+        const res = await fetch(`${baseUrl}/list`);
+        const data = await res.json();
+        
+        if (data.status === 'success' && data.files.length > 0) {
+          let html = '<h3>レンダリング済みファイル</h3><ul>';
+          data.files.forEach(file => {
+            const sizeKB = Math.round(file.size / 1024);
+            const createdDate = new Date(file.created * 1000).toLocaleString('ja-JP');
+            html += `
+              <li style="margin: 8px 0; padding: 8px; background: #333; border-radius: 4px;">
+                <strong>ID: ${file.unique_id}</strong><br>
+                <small>サイズ: ${sizeKB}KB | 作成日時: ${createdDate}</small><br>
+                <a href="${file.download_url}" target="_blank" style="color: #4CAF50; text-decoration: none;">
+                  📥 ダウンロード
+                </a>
+                &nbsp;|
+                <a href="${baseUrl}/progress_test?id=${encodeURIComponent(file.unique_id)}" target="_blank" style="color: #9CDCFE; text-decoration: none;">
+                  🔎 進行状況
+                </a>
+              </li>
+            `;
+          });
+          html += '</ul>';
+          fileListDiv.innerHTML = html;
+        } else {
+          fileListDiv.innerHTML = '<p>レンダリング済みファイルはありません。</p>';
+        }
+      } catch (err) {
+        fileListDiv.innerHTML = `<p style="color: #ff6b6b;">ファイル一覧の取得に失敗しました: ${err}</p>`;
+      }
+    }
+
+    // ページ読み込み時にファイル一覧を取得
+    window.onload = function() {
+      loadFileList();
+    };
   </script>
   <!-- This page sends raw bytes with X-Filename header, not multipart/form-data -->
 </head>
@@ -80,6 +137,10 @@
 
     <h3>結果</h3>
     <pre id="log"></pre>
+
+    <div id="fileList">
+      <p>ファイル一覧を読み込み中...</p>
+    </div>
   </div>
 </body>
 </html>

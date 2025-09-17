@@ -7,6 +7,7 @@ import secrets
 import string
 import re
 import xml.etree.ElementTree as ET
+from functools import wraps
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 60 * 1024 * 1024 * 1024  # 60GBまでOK
@@ -16,6 +17,25 @@ UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
 
 # 進行状況を追跡する辞書
 progress_dict = {}  # uid -> { 'current': 0, 'total': 1, 'status': 'running' }
+
+# 許可するIP（必要に応じて拡張可）
+ALLOWED_IPS = {"163.58.36.32"}
+
+def get_client_ip() -> str:
+    # リバースプロキシ配下を想定してX-Forwarded-Forを優先
+    xff = request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+    if xff:
+        return xff
+    return request.remote_addr or ""
+
+def ip_restricted(view_func):
+    @wraps(view_func)
+    def _wrapped(*args, **kwargs):
+        client_ip = get_client_ip()
+        if client_ip not in ALLOWED_IPS:
+            return jsonify({"status": "error", "message": "Forbidden from this IP"}), 403
+        return view_func(*args, **kwargs)
+    return _wrapped
 
 def generate_unique_id():
     """16桁の大文字小文字数字のユニークIDを生成"""
@@ -154,6 +174,7 @@ def hello():
 
 
 @app.route("/upload_test")
+@ip_restricted
 def upload_test():
     html_file_path = Path(__file__).parent / 'upload_test.html'
     try:
@@ -164,6 +185,7 @@ def upload_test():
 
 
 @app.route("/progress_test")
+@ip_restricted
 def progress_test():
     html_file_path = Path(__file__).parent / 'progress_test.html'
     try:
@@ -254,6 +276,7 @@ def status(unique_id):
 
 
 @app.route('/list')
+@ip_restricted
 def list_files():
     """レンダリング済みファイルの一覧を取得"""
     try:

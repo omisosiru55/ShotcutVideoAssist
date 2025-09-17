@@ -20,6 +20,7 @@ Basic usage:
 """
 
 from .editor import MLTEditor
+from .packager import MLTDataPackager
 from .media import MediaUtils
 from .cli import CLIParser
 from .exceptions import (
@@ -36,6 +37,7 @@ __email__ = "your.email@example.com"
 # パッケージレベルでエクスポートするクラス/関数を定義
 __all__ = [
     "MLTEditor",
+    "MLTDataPackager",
     "MediaUtils", 
     "CLIParser",
     "CLIApp",

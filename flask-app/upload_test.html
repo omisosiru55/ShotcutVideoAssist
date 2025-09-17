@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upload Test - data.zip → /upload</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background: #1e1e1e; color: #e2e2e2; margin: 24px; }
+    .card { background: #2b2b2b; border-radius: 8px; padding: 16px; max-width: 720px; }
+    label { display: block; margin: 8px 0 4px; }
+    input[type="text"] { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #444; background: #1a1a1a; color: #e2e2e2; }
+    input[type="file"] { margin-top: 4px; }
+    button { margin-top: 12px; background: #175C76; color: #e2e2e2; border: 0; padding: 10px 14px; border-radius: 6px; cursor: pointer; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    pre { background: #111; padding: 12px; border-radius: 6px; overflow: auto; }
+    .row { display: flex; gap: 12px; align-items: center; }
+  </style>
+  <script>
+    async function uploadFile() {
+      const serverUrlInput = document.getElementById('serverUrl');
+      const fileInput = document.getElementById('fileInput');
+      const log = document.getElementById('log');
+      const btn = document.getElementById('btnUpload');
+
+      log.textContent = '';
+
+      const serverUrl = (serverUrlInput.value || '').trim();
+      if (!serverUrl) {
+        log.textContent = 'サーバURLを入力してください。例: http://wkimono.home/:5000/upload';
+        return;
+      }
+
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) {
+        log.textContent = 'アップロードする data.zip を選択してください。';
+        return;
+      }
+
+      btn.disabled = true;
+      try {
+        const res = await fetch(serverUrl, {
+          method: 'POST',
+          headers: {
+            'X-Filename': file.name,
+            'Content-Type': 'application/octet-stream'
+          },
+          body: file
+        });
+
+        const text = await res.text();
+        let parsed;
+        try { parsed = JSON.parse(text); } catch (_) { parsed = text; }
+
+        log.textContent = `Status: ${res.status}\n\nResponse:\n${typeof parsed === 'string' ? parsed : JSON.stringify(parsed, null, 2)}`;
+      } catch (err) {
+        log.textContent = `エラー: ${err}`;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+  </script>
+  <!-- This page sends raw bytes with X-Filename header, not multipart/form-data -->
+</head>
+<body>
+  <div class="card">
+    <h2>Upload Test</h2>
+    <p>data.zip を <code>/upload</code> エンドポイントに POST します（生バイト・ストリーム）。</p>
+
+    <label for="serverUrl">サーバURL</label>
+    <input id="serverUrl" type="text" value="http://wkimono.home:5000/upload" />
+
+    <div class="row">
+      <div>
+        <label for="fileInput">ファイル選択（data.zip）</label>
+        <input id="fileInput" type="file" accept=".zip" />
+      </div>
+    </div>
+
+    <button id="btnUpload" onclick="uploadFile()">アップロード</button>
+
+    <h3>結果</h3>
+    <pre id="log"></pre>
+  </div>
+</body>
+</html>
+

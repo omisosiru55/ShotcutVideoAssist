@@ -54,7 +54,7 @@ Package an existing .mlt project into a portable zip and upload it to your Flask
   - Rewrite all `producer > property[name="resource"]` and `chain > property[name="resource"]` file paths to `data/<filename>`
   - Collect those files into `data.zip` under `data/`
   - Save a modified MLT as `cloud_rendering.mlt` and include it in the zip
-  - Optionally POST the zip to your server (default: `http://wkimono.home/upload`)
+  - Optionally POST the zip to your server (default: `http://163.58.36.32/upload`)
 
 CLI example:
 
@@ -69,7 +69,7 @@ from mltpy import MLTDataPackager
 
 packager = MLTDataPackager(r"C:\\Users\\user\\Videos\\shotcut\\20250912test\\test1.mlt")
 zip_path = packager.prepare_zip()
-status, text = packager.upload("http://wkimono.home/upload")
+status, text = packager.upload("http://163.58.36.32/upload")
 print(zip_path, status, text)
 ```
 
@@ -142,7 +142,7 @@ pyinstaller --onefile --noconsole -n ShotcutMLTToolbox mltpy/gui.py
   - `producer > property[name="resource"]` と `chain > property[name="resource"]` のファイルパスを `data/<ファイル名>` に書き換え
   - 実ファイルを ZIP 内の `data/` 配下へ格納
   - 修正版 MLT を `cloud_rendering.mlt` として保存し、ZIP に含める
-  - 必要に応じて ZIP をサーバ（既定: `http://wkimono.home/upload`）に POST
+  - 必要に応じて ZIP をサーバ（既定: `http://163.58.36.32/upload`）に POST
 
 CLI 例:
 
@@ -157,7 +157,7 @@ from mltpy import MLTDataPackager
 
 packager = MLTDataPackager(r"C:\\Users\\user\\Videos\\shotcut\\20250912test\\test1.mlt")
 zip_path = packager.prepare_zip()
-status, text = packager.upload("http://wkimono.home/upload")
+status, text = packager.upload("http://163.58.36.32/upload")
 print(zip_path, status, text)
 ```
 

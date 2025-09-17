@@ -10,7 +10,8 @@ services:
       - .:/app 
       - /srv/rendering:/data/rendering
     environment:
-      - FLASK_APP=app.py
+      - FLASK_APP=app:app
       - FLASK_ENV=development
+      - PYTHONUNBUFFERED=1
     command: flask run --host=0.0.0.0 --port=5000 --reload
 

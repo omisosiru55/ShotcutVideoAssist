@@ -109,9 +109,8 @@ class CLIApp:
         if self.args.cloud_render:
             packager = MLTDataPackager(self.args.input_path)
             zip_path = packager.prepare_zip()  # data.zip を生成
-            #print(zip_path)
-            #status, text = packager.upload("http://wkimono.home/upload")  # アップロード
-            #print(zip_path, status, text)
+            status, text = packager.upload()  # アップロード
+            print(zip_path, status, text)
         else:
             editor.save()
 

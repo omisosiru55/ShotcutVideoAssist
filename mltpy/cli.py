@@ -1,6 +1,7 @@
 
 import argparse
-from .editor import MLTEditor
+from mltpy.editor import MLTEditor
+from mltpy import MLTDataPackager
 from dotenv import load_dotenv
 import os
 
@@ -46,8 +47,6 @@ class CLIParser:
                  '長いシンプルテキストの行を指定した最大長で折り返し処理する'
         )
 
-
-
         parser.add_argument(
             '--force-wrap',
             action='store_true',
@@ -83,6 +82,12 @@ class CLIParser:
             help='language to translate to'
         )
 
+        parser.add_argument(
+            '--cloud-render',
+            action='store_true',
+            help='Render on cloud / クラウドでレンダリングする'
+        )
+
         return parser.parse_args(args)
 
 class CLIApp:
@@ -101,7 +106,14 @@ class CLIApp:
         if self.args.translate_dynamictext:
             editor.translate_dynamictext(from_lang=self.args.translate_from, to_lang=self.args.translate_to)
 
-        editor.save()
+        if self.args.cloud_render:
+            packager = MLTDataPackager(self.args.input_path)
+            zip_path = packager.prepare_zip()  # data.zip を生成
+            #print(zip_path)
+            #status, text = packager.upload("http://wkimono.home/upload")  # アップロード
+            #print(zip_path, status, text)
+        else:
+            editor.save()
 
 def main(args=None):
     load_dotenv()  # .envファイルから環境変数を読み込む

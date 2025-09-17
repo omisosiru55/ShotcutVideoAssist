@@ -44,6 +44,39 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Compatible with Shotcut, OpenShot, and other MLT-based editors
 - Uses OpenCV for media file processing
 
+
+### Cloud Rendering 
+
+Package an existing .mlt project into a portable zip and upload it to your Flask cloud renderer.
+
+- What the packager does:
+  - Parse the .mlt as XML
+  - Rewrite all `producer > property[name="resource"]` and `chain > property[name="resource"]` file paths to `data/<filename>`
+  - Collect those files into `data.zip` under `data/`
+  - Save a modified MLT as `cloud_rendering.mlt` and include it in the zip
+  - Optionally POST the zip to your server (default: `http://wkimono.home/upload`)
+
+CLI example:
+
+```bash
+mltpy --input-path C:\\Users\\user\\Videos\\shotcut\\20250912test\\test1.mlt --cloud-render
+```
+
+Programmatic example:
+
+```python
+from mltpy import MLTDataPackager
+
+packager = MLTDataPackager(r"C:\\Users\\user\\Videos\\shotcut\\20250912test\\test1.mlt")
+zip_path = packager.prepare_zip()
+status, text = packager.upload("http://wkimono.home/upload")
+print(zip_path, status, text)
+```
+
+Server endpoints:
+- `POST /upload` (header `X-Filename: data.zip`, content-type `application/octet-stream`)
+- Optional: `GET /status/<unique_id>`, `GET /download/<unique_id>`
+
 ---
 
 # mltpy
@@ -100,3 +133,34 @@ pyinstaller --onefile --noconsole -n ShotcutMLTToolbox mltpy/gui.py
 - MLT フレームワークファイルの操作用に構築
 - Shotcut、OpenShot、その他の MLT ベースのエディタと互換性があります
 - メディアファイル処理に OpenCV を使用
+
+#### クラウドレンダリング
+手元の .mlt プロジェクトを ZIP にまとめ、Flask のクラウドレンダラーへアップロードできます。
+
+- パッケージャの処理内容:
+  - .mlt を XML として解析
+  - `producer > property[name="resource"]` と `chain > property[name="resource"]` のファイルパスを `data/<ファイル名>` に書き換え
+  - 実ファイルを ZIP 内の `data/` 配下へ格納
+  - 修正版 MLT を `cloud_rendering.mlt` として保存し、ZIP に含める
+  - 必要に応じて ZIP をサーバ（既定: `http://wkimono.home/upload`）に POST
+
+CLI 例:
+
+```bash
+mltpy --input-path C:\\Users\\user\\Videos\\shotcut\\20250912test\\test1.mlt --cloud-render
+```
+
+Python からの使用例:
+
+```python
+from mltpy import MLTDataPackager
+
+packager = MLTDataPackager(r"C:\\Users\\user\\Videos\\shotcut\\20250912test\\test1.mlt")
+zip_path = packager.prepare_zip()
+status, text = packager.upload("http://wkimono.home/upload")
+print(zip_path, status, text)
+```
+
+サーバ側の主なエンドポイント:
+- `POST /upload`: `data.zip` を送信（ヘッダー `X-Filename: data.zip`、Content-Type は `application/octet-stream`）
+- 任意: `GET /status/<unique_id>` で進行状況、`GET /download/<unique_id>` で完成動画をダウンロード

@@ -160,7 +160,12 @@ class GUIApp:
             # packagerを使用してZIP作成とアップロード
             packager = MLTDataPackager(self.input_path_var.get())
             zip_path = packager.prepare_zip()  # data.zip を生成
-            status, text = packager.upload()   # アップロード
+            
+            # アップロード進捗コールバックを設定
+            def upload_progress_callback(progress, uploaded_bytes, total_bytes):
+                self.root.after(0, lambda: self._update_upload_progress(progress, uploaded_bytes, total_bytes))
+            
+            status, text = packager.upload(progress_callback=upload_progress_callback)   # アップロード
             
             print(f"ZIP path: {zip_path}, Status: {status}, Response: {text}")
             
@@ -171,9 +176,7 @@ class GUIApp:
                     response_data = json.loads(text)
                     self.unique_id = response_data.get('unique_id')
                     if self.unique_id:
-                        # 状態: レンダリング
-                        self.root.after(0, lambda: self.update_status("Status 状態: Rendering レンダリング"))
-                        # ポーリング開始
+                        # ポーリング開始（キュー待機状態も含む）
                         self.start_polling()
                     else:
                         self.root.after(0, lambda: messagebox.showerror("エラー", "アップロードレスポンスにunique_idが含まれていません"))
@@ -222,12 +225,14 @@ class GUIApp:
                     current = data.get('current', 0)    # 達成したクリップ数
                     total = data.get('total', 0)        # 総クリップ数
                     
-                    # デバッグ用ログ出力
+                    # デバッグ用ログ出力（詳細版）
                     print(f"Status response: {data}")
+                    print(f"Parsed - Status: '{status}', Progress: {progress}, Current: {current}, Total: {total}")
                     
                     # progressが100%の場合は完了として扱う
                     if progress >= 100:
                         status = 'completed'
+                        print("Progress reached 100%, setting status to 'completed'")
                     
                     # UIを更新
                     self.root.after(0, lambda s=status, p=progress, c=current, t=total: self._update_progress(s, p, c, t))
@@ -241,25 +246,53 @@ class GUIApp:
                         self.root.after(0, lambda: messagebox.showerror("エラー", "レンダリング中にエラーが発生しました"))
                         self.is_polling = False
                         break
+                    elif status in ['rendering', 'running', 'processing']:
+                        # レンダリング中（複数のステータス名に対応）
+                        print(f"Rendering status detected: {status}")
+                        # ポーリングを継続
+                    else:
+                        # その他の状態
+                        print(f"Unknown status: {status}, continuing polling...")
+                        # ポーリングを継続
                         
             except Exception as e:
                 print(f"ポーリングエラー: {e}")
                 
             time.sleep(2)  # 2秒間隔でポーリング
 
+    def _update_upload_progress(self, progress, uploaded_bytes, total_bytes):
+        """アップロード進捗を更新"""
+        # 進捗バーを更新
+        self.progress_bar['value'] = progress
+        
+        # 数値表示を更新（GB単位で表示）
+        uploaded_gb = uploaded_bytes / (1024**3)
+        total_gb = total_bytes / (1024**3)
+        self.progress_text.config(text=f"{progress:.0f}% ({uploaded_gb:.2f}GB / {total_gb:.2f}GB)")
+    
     def _update_progress(self, status, progress, current, total):
         """進捗を更新"""
-        if status == 'rendering':
+        # デバッグ用ログ出力
+        print(f"Updating progress - Status: {status}, Progress: {progress}, Current: {current}, Total: {total}")
+        
+        if status in ['rendering', 'running', 'processing']:
+            # レンダリング中（複数のステータス名に対応）
             self.status_label.config(text="Status 状態: Rendering レンダリング")
+            # progressは既にパーセント値なので、そのまま使用
+            self.progress_bar['value'] = progress
+            if total > 0:
+                self.progress_text.config(text=f"{progress:.0f}% ({current}/{total})")
+            else:
+                self.progress_text.config(text=f"{progress:.0f}%")
         elif status == 'completed':
             self.status_label.config(text="Status 状態: Completed 完了")
-        
-        # progressは既にパーセント値なので、そのまま使用
-        self.progress_bar['value'] = progress
-        if total > 0:
-            self.progress_text.config(text=f"{progress:.0f}% ({current}/{total})")
+            self.progress_bar['value'] = 100
+            self.progress_text.config(text="100% (完了)")
         else:
-            self.progress_text.config(text=f"{progress:.0f}%")
+            # その他の状態（エラーなど）
+            self.status_label.config(text=f"Status 状態: {status}")
+            self.progress_bar['value'] = 0
+            self.progress_text.config(text="")
 
     def _show_download_link(self):
         """ダウンロードリンクを表示"""

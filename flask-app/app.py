@@ -142,7 +142,7 @@ def render_with_progress(mlt_file, output_file, uid):
 
     proc.wait()
     progress_dict[uid]['current'] = progress_dict[uid]['total']
-    progress_dict[uid]['status'] = 'done'
+    progress_dict[uid]['status'] = 'completed'
 
 def process_file(filepath: Path, unique_id: str):
     """バックグラウンドでZIP解凍とレンダリングを行う"""

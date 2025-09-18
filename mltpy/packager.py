@@ -88,7 +88,7 @@ class MLTDataPackager:
 
         return self.zip_path
 
-    def upload(self, url: str | None = None, timeout: int = 60) -> Tuple[int, str]:
+    def upload(self, url: str | None = None, timeout: int = 60, progress_callback=None) -> Tuple[int, str]:
         """生成済み ZIP を指定URLへPOSTする。戻り値は (status_code, text)。"""
         if not self.zip_path.exists():
             raise FileNotFoundError("data.zip is not prepared. Call prepare_zip() first.")
@@ -100,8 +100,32 @@ class MLTDataPackager:
             "X-Filename": self.zip_path.name,
             "Content-Type": "application/octet-stream",
         }
+        
+        # ファイルサイズを取得
+        file_size = self.zip_path.stat().st_size
+        
         with self.zip_path.open("rb") as f:
-            resp = requests.post(url, data=f, headers=headers, timeout=timeout)
+            # アップロード進捗を追跡するためのカスタムアダプター
+            class ProgressAdapter:
+                def __init__(self, file_obj, callback, total_size):
+                    self.file_obj = file_obj
+                    self.callback = callback
+                    self.total_size = total_size
+                    self.uploaded = 0
+                
+                def read(self, size=-1):
+                    data = self.file_obj.read(size)
+                    if data and self.callback:
+                        self.uploaded += len(data)
+                        progress = (self.uploaded / self.total_size) * 100
+                        self.callback(progress, self.uploaded, self.total_size)
+                    return data
+                
+                def __getattr__(self, name):
+                    return getattr(self.file_obj, name)
+            
+            progress_file = ProgressAdapter(f, progress_callback, file_size)
+            resp = requests.post(url, data=progress_file, headers=headers, timeout=timeout)
         return resp.status_code, resp.text
 
     # ----------------------- 内部ユーティリティ -----------------------

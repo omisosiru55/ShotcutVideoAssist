@@ -70,7 +70,7 @@ class GUIApp:
         # 初期状態では非表示
         
         # 進捗状態ラベル
-        self.status_label = tk.Label(self.progress_frame, text="状態: 未実行", fg=FG_COLOR, bg=BG_COLOR)
+        self.status_label = tk.Label(self.progress_frame, text="Status 状態: Not started 未実行", fg=FG_COLOR, bg=BG_COLOR)
         self.status_label.pack(anchor="w")
         
         # 進捗バー
@@ -224,10 +224,11 @@ class GUIApp:
                     progress = data.get('progress', 0)  # パーセント値
                     current = data.get('current', 0)    # 達成したクリップ数
                     total = data.get('total', 0)        # 総クリップ数
+                    queue = data.get('queue', 0)        # キュー内の位置
                     
                     # デバッグ用ログ出力（詳細版）
                     print(f"Status response: {data}")
-                    print(f"Parsed - Status: '{status}', Progress: {progress}, Current: {current}, Total: {total}")
+                    print(f"Parsed - Status: '{status}', Progress: {progress}, Current: {current}, Total: {total}, Queue: {queue}")
                     
                     # progressが100%の場合は完了として扱う
                     if progress >= 100:
@@ -235,7 +236,7 @@ class GUIApp:
                         print("Progress reached 100%, setting status to 'completed'")
                     
                     # UIを更新
-                    self.root.after(0, lambda s=status, p=progress, c=current, t=total: self._update_progress(s, p, c, t))
+                    self.root.after(0, lambda s=status, p=progress, c=current, t=total, q=queue: self._update_progress(s, p, c, t, q))
                     
                     if status == 'completed':
                         # 完了時はダウンロードリンクを表示
@@ -270,10 +271,10 @@ class GUIApp:
         total_gb = total_bytes / (1024**3)
         self.progress_text.config(text=f"{progress:.0f}% ({uploaded_gb:.2f}GB / {total_gb:.2f}GB)")
     
-    def _update_progress(self, status, progress, current, total):
+    def _update_progress(self, status, progress, current, total, queue=0):
         """進捗を更新"""
         # デバッグ用ログ出力
-        print(f"Updating progress - Status: {status}, Progress: {progress}, Current: {current}, Total: {total}")
+        print(f"Updating progress - Status: {status}, Progress: {progress}, Current: {current}, Total: {total}, Queue: {queue}")
         
         if status in ['rendering', 'running', 'processing']:
             # レンダリング中（複数のステータス名に対応）
@@ -284,6 +285,14 @@ class GUIApp:
                 self.progress_text.config(text=f"{progress:.0f}% ({current}/{total})")
             else:
                 self.progress_text.config(text=f"{progress:.0f}%")
+        elif status == 'waiting':
+            # キュー待機中
+            self.status_label.config(text="Status 状態: Waiting in Queue キュー待機中")
+            self.progress_bar['value'] = 0
+            if queue >= 0:
+                self.progress_text.config(text=f"あと{queue + 1}人のジョブが完了するまで待機中...")
+            else:
+                self.progress_text.config(text="他ユーザのジョブの完了を待機中...")
         elif status == 'completed':
             self.status_label.config(text="Status 状態: Completed 完了")
             self.progress_bar['value'] = 100

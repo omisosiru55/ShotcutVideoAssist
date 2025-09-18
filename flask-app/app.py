@@ -50,6 +50,38 @@ def generate_unique_id():
     alphabet = string.ascii_letters + string.digits  # a-z, A-Z, 0-9
     return ''.join(secrets.choice(alphabet) for _ in range(16))
 
+def get_queue_position(unique_id):
+    """キュー内でのジョブの位置を取得（0から始まる）"""
+    # キュー内の位置を計算
+    queue_position = 0
+    
+    # キュー内のジョブを確認して位置を計算
+    temp_jobs = []
+    position = 0
+    found_position = -1
+    
+    # キューからすべてのジョブを取り出して確認
+    while True:
+        try:
+            job = job_queue.get_nowait()
+            temp_jobs.append(job)
+            if job == unique_id:
+                found_position = position
+            position += 1
+        except queue.Empty:
+            break
+    
+    # 取り出したジョブをキューに戻す
+    for job in temp_jobs:
+        job_queue.put(job)
+    
+    if found_position != -1:
+        queue_position = found_position
+    else:
+        queue_position = 0  # 見つからない場合は0とする
+    
+    return queue_position
+
 def get_job_status(unique_id):
     """job_queueベースでジョブの状態を判定"""
     # 状態判定（キュー操作を避けて、セットベースで判定）
@@ -377,11 +409,15 @@ def status(unique_id):
     else:
         progress = 0
     
+    # キュー内の位置を計算
+    queue_position = get_queue_position(unique_id)
+    
     return jsonify({
         "status": job_status_result,
         "progress": progress,
         "current": progress_info['current'],
-        "total": progress_info['total']
+        "total": progress_info['total'],
+        "queue": queue_position
     })
 
 

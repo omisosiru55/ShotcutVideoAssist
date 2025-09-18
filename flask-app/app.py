@@ -288,6 +288,33 @@ def status(unique_id):
     })
 
 
+@app.route('/status')
+def server_status():
+    """サーバー全体の状況を取得"""
+    try:
+        # 実行中のジョブをカウント
+        running_jobs = [uid for uid, info in progress_dict.items() if info['status'] == 'running']
+        queue_count = len(running_jobs)
+        
+        # 現在実行中のジョブのID（最初のもの）
+        current_job = running_jobs[0] if running_jobs else None
+        
+        # サーバーの状態を決定
+        if queue_count == 0:
+            server_status = "waiting"
+        else:
+            server_status = "processing"
+        
+        return jsonify({
+            "status": server_status,
+            "queue": queue_count,
+            "current_job": current_job
+        }), 200
+    
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Failed to get server status: {str(e)}"}), 500
+
+
 @app.route('/list')
 @ip_restricted
 def list_files():

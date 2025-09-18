@@ -289,6 +289,7 @@ def status(unique_id):
 
 
 @app.route('/status')
+@ip_restricted
 def server_status():
     """サーバー全体の状況を取得"""
     try:

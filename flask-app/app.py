@@ -9,6 +9,7 @@ import re
 import xml.etree.ElementTree as ET
 from functools import wraps
 import time
+import queue
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 60 * 1024 * 1024 * 1024  # 60GBまでOK
@@ -18,6 +19,12 @@ UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
 
 # 進行状況を追跡する辞書
 progress_dict = {}  # uid -> { 'current': 0, 'total': 1, 'status': 'running' }
+
+# キュー機能のためのグローバル変数
+job_queue = queue.Queue()
+completed_jobs = set()  # task_done()が呼ばれたジョブのIDを記録
+processing_jobs = set()  # 現在処理中のジョブのIDを記録
+worker_started = False
 
 # 許可するIP（必要に応じて拡張可）
 ALLOWED_IPS = {"163.58.36.32"}
@@ -42,6 +49,87 @@ def generate_unique_id():
     """16桁の大文字小文字数字のユニークIDを生成"""
     alphabet = string.ascii_letters + string.digits  # a-z, A-Z, 0-9
     return ''.join(secrets.choice(alphabet) for _ in range(16))
+
+def get_job_status(unique_id):
+    """job_queueベースでジョブの状態を判定"""
+    # 状態判定（キュー操作を避けて、セットベースで判定）
+    if unique_id in processing_jobs:
+        # 処理中
+        return "processing"
+    elif unique_id in completed_jobs:
+        # 完了済み
+        return "completed"
+    else:
+        # キュー内のジョブを確認（非破壊的に）
+        temp_jobs = []
+        job_in_queue = False
+        
+        # キューからすべてのジョブを取り出して確認
+        while True:
+            try:
+                job = job_queue.get_nowait()
+                temp_jobs.append(job)
+                if job == unique_id:
+                    job_in_queue = True
+            except queue.Empty:
+                break
+        
+        # 取り出したジョブをキューに戻す
+        for job in temp_jobs:
+            job_queue.put(job)
+        
+        if job_in_queue:
+            return "waiting"
+        else:
+            return "unknown"
+
+def start_worker():
+    """ワーカースレッドを起動（重複起動を防ぐ）"""
+    global worker_started
+    if not worker_started:
+        worker = threading.Thread(target=worker_thread, daemon=True)
+        worker.start()
+        worker_started = True
+        print("Worker thread started and waiting for jobs...")
+
+def worker_thread():
+    """ワーカースレッド：キューからジョブを取り出して処理する"""
+    while True:
+        try:
+            # キューからジョブを取得（ブロッキング）
+            unique_id = job_queue.get()
+            print(f"Worker: Processing job {unique_id}")
+            
+            # 処理中としてマーク
+            processing_jobs.add(unique_id)
+            
+            # ファイルパスを構築
+            filepath = UPLOAD_FOLDER / f"{unique_id}.zip"
+            
+            # ファイルが存在するかチェック
+            if not filepath.exists():
+                print(f"Worker: File not found for job {unique_id}: {filepath}")
+                job_queue.task_done()
+                processing_jobs.discard(unique_id)
+                completed_jobs.add(unique_id)
+                continue
+            
+            # 既存のprocess_file関数を使用してファイル処理
+            process_file(filepath, unique_id)
+            
+            print(f"Worker: Job {unique_id} completed")
+            
+            # タスク完了をマーク
+            job_queue.task_done()
+            processing_jobs.discard(unique_id)
+            completed_jobs.add(unique_id)
+            
+        except Exception as e:
+            print(f"Worker error: {e}")
+            # エラーでもタスク完了をマーク
+            job_queue.task_done()
+            processing_jobs.discard(unique_id)
+            completed_jobs.add(unique_id)
 
 def get_mlt_duration(mlt_file):
     """MLTファイルから総フレーム数を取得。
@@ -210,6 +298,8 @@ def progress_test():
 
 @app.route('/upload', methods=['POST'])
 def upload():
+    """ファイルアップロードエンドポイント：ファイルアップロード後にキューに登録"""
+    
     filename = request.headers.get('X-Filename', 'data.zip')
     
     # 16桁のユニークIDを生成
@@ -234,16 +324,18 @@ def upload():
     except Exception as e:
         return jsonify({"status": "error", "message": f"Error saving file: {str(e)}"}), 500
 
-    # 非同期で解凍＆レンダリング開始
-    threading.Thread(target=process_file, args=(filepath, unique_id), daemon=True).start()
+    # キューにジョブを登録
+    job_queue.put(unique_id)
+    print(f"Job {unique_id} added to queue")
     
     return jsonify({
         "status": "success", 
-        "message": "Upload complete", 
+        "message": "Upload complete and job queued", 
         "original_filename": filename,
         "unique_id": unique_id,
         "download_url": f"/download/{unique_id}"
     }), 200
+
 
 
 @app.route('/download/<unique_id>')
@@ -270,21 +362,26 @@ def download_file(unique_id):
 
 @app.route('/status/<unique_id>')
 def status(unique_id):
-    """レンダリングの進行状況を取得"""
-    info = progress_dict.get(unique_id)
-    if not info:
-        return jsonify({"status": "error", "message": "ID not found"}), 404
+    """キュー機能用のジョブ状態確認エンドポイント"""
+    job_status_result = get_job_status(unique_id)
     
-    if info['total'] > 0:
-        progress = int(info['current'] / info['total'] * 100)
+    if job_status_result == "unknown":
+        return jsonify({"status": "unknown"}), 404
+    
+    # progress_dictから進捗情報を取得
+    progress_info = progress_dict.get(unique_id, {'current': 0, 'total': 1, 'status': 'running'})
+    
+    # 進捗計算
+    if progress_info['total'] > 0:
+        progress = int(progress_info['current'] / progress_info['total'] * 100)
     else:
         progress = 0
     
     return jsonify({
-        "status": info['status'], 
+        "status": job_status_result,
         "progress": progress,
-        "current": info['current'],
-        "total": info['total']
+        "current": progress_info['current'],
+        "total": progress_info['total']
     })
 
 
@@ -339,5 +436,9 @@ def list_files():
         return jsonify({"status": "error", "message": f"Failed to list files: {str(e)}"}), 500
 
 
+# アプリケーション起動時にワーカーを起動
+start_worker()
+
 if __name__ == "__main__":
+    print("Starting Flask app on http://0.0.0.0:5000")
     app.run(host="0.0.0.0", port=5000, debug=True)

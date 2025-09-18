@@ -85,7 +85,7 @@ class CLIParser:
         parser.add_argument(
             '--cloud-render',
             action='store_true',
-            help='Render on cloud / クラウドでレンダリングする'
+            help='Render on cloud / クラウドでレンダリングする (Test version)'
         )
 
         return parser.parse_args(args)

@@ -67,10 +67,10 @@ class GUIApp:
 
         # ===== Progress Display Area =====
         self.progress_frame = tk.Frame(root, bg=BG_COLOR)
-        self.progress_frame.pack(fill="x", padx=20, pady=10)
+        # 初期状態では非表示
         
         # 進捗状態ラベル
-        self.status_label = tk.Label(self.progress_frame, text="Status 状態: Not Running 未実行", fg=FG_COLOR, bg=BG_COLOR)
+        self.status_label = tk.Label(self.progress_frame, text="状態: 未実行", fg=FG_COLOR, bg=BG_COLOR)
         self.status_label.pack(anchor="w")
         
         # 進捗バー
@@ -82,7 +82,7 @@ class GUIApp:
         self.progress_text.pack(anchor="w", pady=(2, 0))
         
         # ダウンロードリンク
-        self.download_link = tk.Label(self.progress_frame, text="", fg="blue", bg=BG_COLOR, cursor="hand2")
+        self.download_link = tk.Label(self.progress_frame, text="", fg=FG_COLOR, bg=BG_COLOR, cursor="hand2")
         self.download_link.pack(anchor="w", pady=(5, 0))
         
         # クラウドレンダリング用の変数
@@ -94,11 +94,13 @@ class GUIApp:
         """ラジオボタン選択時の詳細オプション表示/非表示切り替え"""
         choice = self.wrap_choice_var.get()
         if choice == "cloud_rendering":
-            # Cloud Rendering選択時は詳細オプションを非表示
+            # Cloud Rendering選択時は詳細オプションを非表示、進捗フレームを表示
             self.frame_details.pack_forget()
+            self.progress_frame.pack(fill="x", padx=20, pady=10)
         else:
-            # その他の選択時は詳細オプションを表示
+            # その他の選択時は詳細オプションを表示、進捗フレームを非表示
             self.frame_details.pack(fill="x", padx=20, pady=10)
+            self.progress_frame.pack_forget()
 
     def browse_file(self):
         file_path = filedialog.askopenfilename(filetypes=[("MLT files", "*.mlt")])
@@ -263,7 +265,7 @@ class GUIApp:
         """ダウンロードリンクを表示"""
         if self.unique_id:
             download_url = f"http://163.58.36.32:5000/download/{self.unique_id}"
-            self.download_link.config(text=f"ダウンロード: {download_url}")
+            self.download_link.config(text=f"Download ダウンロード: {download_url}")
             self.download_link.bind("<Button-1>", lambda e: self._open_download_link(download_url))
 
     def _open_download_link(self, url):

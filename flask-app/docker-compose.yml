@@ -10,4 +10,4 @@ services:
       - FLASK_APP=app:app
       - FLASK_ENV=production
       - PYTHONUNBUFFERED=1
-
+    command: gunicorn -c gunicorn.conf.py app:app --reload

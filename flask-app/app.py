@@ -353,8 +353,6 @@ def upload():
         with filepath.open('wb') as f:
             chunk_size = 10 * 1024 * 1024  # 10MBずつ
             while True:
-                print(f"Active threads: {threading.active_count()}")
-                print(f"Thread names: {[t.name for t in threading.enumerate()]}")
                 chunk = request.stream.read(chunk_size)
                 if not chunk:
                     break
@@ -366,8 +364,8 @@ def upload():
         return jsonify({"status": "error", "message": f"Error saving file: {str(e)}"}), 500
 
     # キューにジョブを登録
-    #job_queue.put(unique_id)
-    #print(f"Job {unique_id} added to queue")
+    job_queue.put(unique_id)
+    print(f"Job {unique_id} added to queue")
     
     return jsonify({
         "status": "success", 

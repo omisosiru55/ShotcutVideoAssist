@@ -50,6 +50,7 @@ def generate_unique_id():
     alphabet = string.ascii_letters + string.digits  # a-z, A-Z, 0-9
     return ''.join(secrets.choice(alphabet) for _ in range(16))
 
+# Fnctions for job queue / ジョブキュー用関数群
 def get_queue_position(unique_id):
     """キュー内でのジョブの位置を取得（0から始まる）"""
     # キュー内の位置を計算
@@ -167,6 +168,7 @@ def worker_thread():
             processing_jobs.discard(unique_id)
             completed_jobs.add(unique_id)
 
+# Functions for rendering / レンダリング用関数群
 def get_mlt_duration(mlt_file):
     """MLTファイルから総フレーム数を取得。
 
@@ -305,10 +307,11 @@ def process_file(filepath: Path, unique_id: str):
         print(f"[ERROR] Processing failed: {e}")
         progress_dict[unique_id] = {'current': 0, 'total': 1, 'status': 'error'}
 
+
+# endpoint: test テスト用エンドポイント
 @app.route("/")
 def hello():
     return "Hello from Flask in Docker!6"
-
 
 @app.route("/upload_test")
 @ip_restricted
@@ -319,7 +322,6 @@ def upload_test():
         return html_content
     except FileNotFoundError:
         return "upload_test.html ファイルが見つかりません。", 404
-
 
 @app.route("/progress_test")
 @ip_restricted
@@ -332,6 +334,7 @@ def progress_test():
         return "progress_test.html ファイルが見つかりません。", 404
 
 
+# endpoint: upload file ファイルアップロードエンドポイント
 @app.route('/upload', methods=['POST'])
 def upload():
     """ファイルアップロードエンドポイント：ファイルアップロード後にキューに登録"""
@@ -350,6 +353,8 @@ def upload():
         with filepath.open('wb') as f:
             chunk_size = 10 * 1024 * 1024  # 10MBずつ
             while True:
+                print(f"Active threads: {threading.active_count()}")
+                print(f"Thread names: {[t.name for t in threading.enumerate()]}")
                 chunk = request.stream.read(chunk_size)
                 if not chunk:
                     break
@@ -361,8 +366,8 @@ def upload():
         return jsonify({"status": "error", "message": f"Error saving file: {str(e)}"}), 500
 
     # キューにジョブを登録
-    job_queue.put(unique_id)
-    print(f"Job {unique_id} added to queue")
+    #job_queue.put(unique_id)
+    #print(f"Job {unique_id} added to queue")
     
     return jsonify({
         "status": "success", 
@@ -373,7 +378,7 @@ def upload():
     }), 200
 
 
-
+# endpoint: download file ファイルダウンロードエンドポイント
 @app.route('/download/<unique_id>')
 def download_file(unique_id):
     """レンダリング済みの動画ファイルをダウンロード"""
@@ -396,6 +401,7 @@ def download_file(unique_id):
         return jsonify({"status": "error", "message": f"Download failed: {str(e)}"}), 500
 
 
+# endpoint: check job status ジョブ状態確認エンドポイント 
 @app.route('/status/<unique_id>')
 def status(unique_id):
     """キュー機能用のジョブ状態確認エンドポイント"""

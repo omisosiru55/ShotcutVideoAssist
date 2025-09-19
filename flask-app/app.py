@@ -117,6 +117,7 @@ def get_job_status(unique_id):
 
 def start_worker():
     """ワーカースレッドを起動（重複起動を防ぐ）"""
+    print("Worker: Starting worker thread...")
     global worker_started
     if not worker_started:
         worker = threading.Thread(target=worker_thread, daemon=True)
@@ -127,7 +128,10 @@ def start_worker():
 def worker_thread():
     """ワーカースレッド：キューからジョブを取り出して処理する"""
     while True:
+        print("Worker: Waiting for job before try...")
         try:
+            print("Worker: Waiting for job in try...")
+
             # キューからジョブを取得（ブロッキング）
             unique_id = job_queue.get()
             print(f"Worker: Processing job {unique_id}")
@@ -472,8 +476,6 @@ def list_files():
         return jsonify({"status": "error", "message": f"Failed to list files: {str(e)}"}), 500
 
 
-# アプリケーション起動時にワーカーを起動
-start_worker()
 
 if __name__ == "__main__":
     print("Starting Flask app on http://0.0.0.0:5000")

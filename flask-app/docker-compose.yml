@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   flask-app:
     build: .
@@ -7,11 +5,9 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - .:/app 
       - /srv/rendering:/data/rendering
     environment:
       - FLASK_APP=app:app
-      - FLASK_ENV=development
+      - FLASK_ENV=production
       - PYTHONUNBUFFERED=1
-    command: flask run --host=0.0.0.0 --port=5000 --reload
 

@@ -30,6 +30,7 @@ This application can be built using pyinstaller.
 Bash
 
 pip install pyinstaller
+
 pyinstaller --onefile --noconsole -n ShotcutMLTToolbox mltpy/gui.py
 
 Once the build is complete, the executable file will be generated in the dist directory.
@@ -112,6 +113,7 @@ exeファイルをパソコン内の任意のフォルダに置いてくださ�
 Bash
 
 pip install pyinstaller
+
 pyinstaller --onefile --noconsole -n ShotcutMLTToolbox mltpy/gui.py
 
 ビルドが完了すると、dist ディレクトリ内に実行ファイルが生成されます。

@@ -89,6 +89,11 @@ class GUIApp:
         self.unique_id = None
         self.polling_thread = None
         self.is_polling = False
+        
+        # 残り時間計算用の変数
+        self.start_time = None
+        self.last_progress = 0
+        self.last_progress_time = None
 
     def on_choice_change(self):
         """ラジオボタン選択時の詳細オプション表示/非表示切り替え"""
@@ -196,10 +201,51 @@ class GUIApp:
         self.download_link.config(text="")
         self.unique_id = None
         self.is_polling = False
+        
+        # 残り時間計算用の変数をリセット
+        self.start_time = None
+        self.last_progress = 0
+        self.last_progress_time = None
 
     def update_status(self, status):
         """ステータスを更新"""
         self.status_label.config(text=status)
+    
+    def calculate_remaining_time(self, progress):
+        """残り時間を計算"""
+        current_time = time.time()
+        
+        # 初回の進捗更新時
+        if self.start_time is None:
+            self.start_time = current_time
+            self.last_progress = progress
+            self.last_progress_time = current_time
+            return None
+        
+        # 進捗が0%の場合は計算しない
+        if progress <= 0:
+            return None
+        
+        # 進捗が前回より増加している場合のみ計算
+        if progress > self.last_progress:
+            # 経過時間を計算
+            elapsed_time = current_time - self.start_time
+            
+            # 進捗率に基づいて残り時間を計算
+            if progress > 0:
+                total_estimated_time = elapsed_time * (100.0 / progress)
+                remaining_time = total_estimated_time - elapsed_time
+                
+                # 分単位に変換
+                remaining_minutes = remaining_time / 60
+                
+                # 前回の進捗と時間を更新
+                self.last_progress = progress
+                self.last_progress_time = current_time
+                
+                return remaining_minutes
+        
+        return None
 
     def start_polling(self):
         """ステータスポーリングを開始"""
@@ -281,10 +327,28 @@ class GUIApp:
             self.status_label.config(text="Status 状態: Rendering レンダリング")
             # progressは既にパーセント値なので、そのまま使用
             self.progress_bar['value'] = progress
+            
+            # 残り時間を計算
+            remaining_minutes = self.calculate_remaining_time(progress)
+            
+            # 進捗表示テキストを構築
             if total > 0:
-                self.progress_text.config(text=f"{progress:.0f}% ({current}/{total})")
+                progress_text = f"{progress:.0f}% ({current}/{total})"
             else:
-                self.progress_text.config(text=f"{progress:.0f}%")
+                progress_text = f"{progress:.0f}%"
+            
+            # 残り時間がある場合は追加
+            if remaining_minutes is not None and remaining_minutes > 0:
+                if remaining_minutes < 1:
+                    # 1分未満の場合は秒で表示
+                    remaining_seconds = int(remaining_minutes * 60)
+                    # 英日両方で表示
+                    progress_text += f" - Remaining Time 残り時間: {remaining_seconds} Seconds 秒"
+                else:
+                    # 1分以上の場合は分で表示
+                    progress_text += f" - Remaining Time 残り時間: {remaining_minutes:.0f} Minutes 分"
+            
+            self.progress_text.config(text=progress_text)
         elif status == 'waiting':
             # キュー待機中
             self.status_label.config(text="Status 状態: Waiting in Queue キュー待機中")

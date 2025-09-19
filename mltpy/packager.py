@@ -53,7 +53,6 @@ class MLTDataPackager:
 
         # 全 producer / chain の resource を data/<basename> に書き換え
         self._path_mapping.clear()
-        used_names: set[str] = set()
 
         def rewrite_resources_on_elements(elements):
             for elem in elements:
@@ -67,7 +66,7 @@ class MLTDataPackager:
                         if not src_path.exists():
                             raise FileNotFoundError(f"Resource file not found: {src_path}")
 
-                        arcname = self._allocate_arcname(src_path.name, used_names)
+                        arcname = src_path.name
                         self._path_mapping[src_path] = f"data/{arcname}"
                         prop.text = f"data/{arcname}"
 
@@ -151,16 +150,5 @@ class MLTDataPackager:
             return p
         return None
 
-    def _allocate_arcname(self, basename: str, used_names: set[str]) -> str:
-        """ZIP内の衝突を避けるためのファイル名割り当て。"""
-        name = basename
-        stem = Path(basename).stem
-        suffix = Path(basename).suffix
-        idx = 1
-        while name in used_names:
-            name = f"{stem}_{idx}{suffix}"
-            idx += 1
-        used_names.add(name)
-        return name
 
 

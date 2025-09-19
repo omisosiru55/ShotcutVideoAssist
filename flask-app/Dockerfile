@@ -12,7 +12,3 @@ COPY requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
-
-# Gunicornで起動
-CMD ["gunicorn", "-c", "gunicorn.conf.py", "app:app"]
-

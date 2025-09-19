@@ -29,6 +29,7 @@ class GUIApp:
         # ラジオボタンの作成
         tk.Radiobutton(frame_choices, text="Wrap Subtitles / 字幕を折り返す", variable=self.wrap_choice_var, value="wrap_subtitles", fg=FG_COLOR, bg=BG_COLOR, selectcolor=BG_COLOR, command=self.on_choice_change).pack(anchor="w")
         tk.Radiobutton(frame_choices, text="Wrap Simple Text / シンプルテキストを折り返す", variable=self.wrap_choice_var, value="wrap_dynamictext", fg=FG_COLOR, bg=BG_COLOR, selectcolor=BG_COLOR, command=self.on_choice_change).pack(anchor="w")
+        tk.Radiobutton(frame_choices, text="Translate Simple Text / シンプルテキストを翻訳する", variable=self.wrap_choice_var, value="translate_dynamictext", fg=FG_COLOR, bg=BG_COLOR, selectcolor=BG_COLOR, command=self.on_choice_change).pack(anchor="w")
         tk.Radiobutton(frame_choices, text="Cloud Rendering / クラウドレンダリング (Test version)", variable=self.wrap_choice_var, value="cloud_rendering", fg=FG_COLOR, bg=BG_COLOR, selectcolor=BG_COLOR, command=self.on_choice_change).pack(anchor="w")
 
         # --- Details Options LabelFrame ---
@@ -52,6 +53,31 @@ class GUIApp:
         # Place the Entry next to the Label.
         self.wrap_max_length_var = tk.IntVar(value=90)
         tk.Entry(input_frame, textvariable=self.wrap_max_length_var, width=10).pack(side="left")
+
+        # --- Translation Options ---
+        # Create a new Frame for translation options
+        self.translation_frame = tk.Frame(self.frame_details, bg=BG_COLOR)
+        # 初期状態では非表示
+
+        # From Language
+        from_lang_frame = tk.Frame(self.translation_frame, bg=BG_COLOR)
+        from_lang_frame.pack(anchor="w", pady=(0, 5))
+        tk.Label(from_lang_frame, text="From Language / 翻訳元", fg=FG_COLOR, bg=BG_COLOR).pack(side="left", padx=(0, 10))
+        
+        self.translate_from_var = tk.StringVar(value="en")
+        from_lang_combo = ttk.Combobox(from_lang_frame, textvariable=self.translate_from_var, width=15, state="readonly")
+        from_lang_combo['values'] = ('en', 'ja', 'fr', 'de', 'es', 'it', 'pt', 'ru', 'zh', 'ko', 'ar', 'hi', 'th', 'vi', 'auto')
+        from_lang_combo.pack(side="left")
+
+        # To Language
+        to_lang_frame = tk.Frame(self.translation_frame, bg=BG_COLOR)
+        to_lang_frame.pack(anchor="w")
+        tk.Label(to_lang_frame, text="To Language / 翻訳先", fg=FG_COLOR, bg=BG_COLOR).pack(side="left", padx=(0, 10))
+        
+        self.translate_to_var = tk.StringVar(value="ja")
+        to_lang_combo = ttk.Combobox(to_lang_frame, textvariable=self.translate_to_var, width=15, state="readonly")
+        to_lang_combo['values'] = ('en', 'ja', 'fr', 'de', 'es', 'it', 'pt', 'ru', 'zh', 'ko', 'ar', 'hi', 'th', 'vi')
+        to_lang_combo.pack(side="left")
 
 
         # ===== File Selection Area =====
@@ -94,6 +120,9 @@ class GUIApp:
         self.start_time = None
         self.last_progress = 0
         self.last_progress_time = None
+        
+        # 初期状態で折り返しオプションを表示
+        self._show_wrap_options_only()
 
     def on_choice_change(self):
         """ラジオボタン選択時の詳細オプション表示/非表示切り替え"""
@@ -102,10 +131,43 @@ class GUIApp:
             # Cloud Rendering選択時は詳細オプションを非表示、進捗フレームを表示
             self.frame_details.pack_forget()
             self.progress_frame.pack(fill="x", padx=20, pady=10)
-        else:
-            # その他の選択時は詳細オプションを表示、進捗フレームを非表示
-            self.frame_details.pack(fill="x", padx=20, pady=10)
+        elif choice == "translate_dynamictext":
+            # 翻訳選択時は翻訳オプションのみ表示、折り返しオプションは非表示
+            self._show_translation_options_only()
             self.progress_frame.pack_forget()
+        else:
+            # その他の選択時は折り返しオプションのみ表示、翻訳オプションは非表示
+            self._show_wrap_options_only()
+            self.progress_frame.pack_forget()
+
+    def _show_translation_options_only(self):
+        """翻訳オプションのみを表示"""
+        # 詳細オプションフレームを表示
+        self.frame_details.pack(fill="x", padx=20, pady=10)
+        
+        # 折り返しオプションを非表示
+        for widget in self.frame_details.winfo_children():
+            if isinstance(widget, tk.Checkbutton) or (isinstance(widget, tk.Frame) and len(widget.winfo_children()) > 0 and isinstance(widget.winfo_children()[0], tk.Label) and "Max Length" in widget.winfo_children()[0].cget("text")):
+                widget.pack_forget()
+        
+        # 翻訳オプションを表示
+        self.translation_frame.pack(anchor="w", pady=(10, 0))
+
+    def _show_wrap_options_only(self):
+        """折り返しオプションのみを表示"""
+        # 詳細オプションフレームを表示
+        self.frame_details.pack(fill="x", padx=20, pady=10)
+        
+        # 翻訳フレームを非表示
+        self.translation_frame.pack_forget()
+        
+        # 折り返しオプションを表示
+        for widget in self.frame_details.winfo_children():
+            if isinstance(widget, tk.Checkbutton):
+                widget.pack(anchor="w")
+            elif isinstance(widget, tk.Frame) and widget != self.translation_frame:
+                # 翻訳フレーム以外のフレーム（折り返しオプション）は表示
+                widget.pack(anchor="w", pady=(5, 0))
 
     def browse_file(self):
         file_path = filedialog.askopenfilename(filetypes=[("MLT files", "*.mlt")])
@@ -135,6 +197,8 @@ class GUIApp:
                 editor.wrap_srt_lines(max_length=self.wrap_max_length_var.get(), force_wrap=self.force_wrap_var.get())
             elif choice == "wrap_dynamictext":
                 editor.wrap_dynamictext_lines(max_length=self.wrap_max_length_var.get(), force_wrap=self.force_wrap_var.get())
+            elif choice == "translate_dynamictext":
+                editor.translate_dynamictext(from_lang=self.translate_from_var.get(), to_lang=self.translate_to_var.get())
 
             editor.save()
             messagebox.showinfo("完了", "処理が完了しました！")

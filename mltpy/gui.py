@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
-from dotenv import load_dotenv
 import os
 import threading
 import time
@@ -236,11 +235,6 @@ class GUIApp:
 
     def run_local_processing(self):
         """ローカル処理（既存の機能）"""
-        load_dotenv()
-        if not os.getenv("GCLOUD_PROJECT_ID"):
-            messagebox.showerror("Error エラー", "Environment variable GCLOUD_PROJECT_ID is not set.\nPlease create a .env file and set GCLOUD_PROJECT_ID='your-project-id'. 環境変数 GCLOUD_PROJECT_ID が設定されていません。\n.env ファイルを作成してください。")
-            return
-
         try:
             editor = MLTEditor(self.input_path_var.get())
 

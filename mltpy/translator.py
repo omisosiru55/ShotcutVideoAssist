@@ -1,6 +1,7 @@
 from google.cloud import translate
 import os
 import requests
+from dotenv import load_dotenv
 
 class GoogleTranslator:
     def __init__(self, from_language="auto", target_language="en", max_translations=1000):
@@ -9,11 +10,14 @@ class GoogleTranslator:
         target_language: 翻訳先の言語
         max_translations: 最大翻訳回数。超えると原文を返す
         """
+        # 環境変数を読み込み
+        load_dotenv()
+        if not os.getenv("GCLOUD_PROJECT_ID"):
+            raise ValueError("Environment variable GCLOUD_PROJECT_ID is not set.\nPlease create a .env file and set GCLOUD_PROJECT_ID='your-project-id'. 環境変数 GCLOUD_PROJECT_ID が設定されていません。\n.env ファイルを作成してください。")
+        
         self.client = translate.TranslationServiceClient()
 
         self.project_id = os.getenv("GCLOUD_PROJECT_ID")
-        if not self.project_id:
-            raise ValueError("環境変数 'GCLOUD_PROJECT_ID' が設定されていません。")
 
         self.parent = f"projects/{self.project_id}/locations/global"
         self.from_language = from_language

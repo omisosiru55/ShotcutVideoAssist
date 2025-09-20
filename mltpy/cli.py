@@ -2,8 +2,6 @@
 import argparse
 from mltpy.editor import MLTEditor
 from mltpy import MLTDataPackager
-from dotenv import load_dotenv
-import os
 
 class CLIParser:
     @staticmethod
@@ -115,13 +113,6 @@ class CLIApp:
             editor.save()
 
 def main(args=None):
-    load_dotenv()  # .envファイルから環境変数を読み込む
-    # GCLOUD_PROJECT_IDが設定されているか確認
-    if not os.getenv("GCLOUD_PROJECT_ID"):
-        print("エラー: 環境変数 GCLOUD_PROJECT_ID が設定されていません。")
-        print(".env ファイルを作成し、GCLOUD_PROJECT_ID='your-project-id' と記述してください。")
-        return # 環境変数がなければ処理を中断
-
     parsed_args = CLIParser.parse_arguments(args)
     app = CLIApp(parsed_args)
     app.run()

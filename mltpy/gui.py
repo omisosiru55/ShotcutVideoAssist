@@ -16,7 +16,7 @@ class GUIApp:
         self.root = root
         self.root.title("Shotcut MLT Toolbox")
         self.root.configure(bg=BG_COLOR)
-        self.root.geometry("600x500")
+        self.root.geometry("600x600")
 
         # ===== Processing Options Area =====
         frame_choices = tk.LabelFrame(root, text="Processing Options / 処理オプション", padx=10, pady=10, bg=BG_COLOR, fg=FG_COLOR)
@@ -244,12 +244,18 @@ class GUIApp:
             elif choice == "wrap_dynamictext":
                 editor.wrap_dynamictext_lines(max_length=self.wrap_max_length_var.get(), force_wrap=self.force_wrap_var.get())
             elif choice == "translate_dynamictext":
-                credentials_path = self.credentials_path_var.get() if self.translate_service_var.get() == "google" else None
+                # Google翻訳の場合、クレデンシャルファイルのパスを環境変数に設定
+                if self.translate_service_var.get() == "google":
+                    credentials_path = self.credentials_path_var.get()
+                    if credentials_path:
+                        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
+                    else: 
+                        messagebox.showerror("Error:", "Credential File box is empty. クレデンシャルファイル欄が空です。")
+                        return
                 editor.translate_dynamictext(
                     from_lang=self.translate_from_var.get(), 
                     to_lang=self.translate_to_var.get(), 
-                    service=self.translate_service_var.get(),
-                    credentials_path=credentials_path
+                    service=self.translate_service_var.get()
                 )
 
             editor.save()

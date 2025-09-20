@@ -1,5 +1,6 @@
 from google.cloud import translate
 import os
+import json
 import requests
 from dotenv import load_dotenv
 
@@ -12,12 +13,26 @@ class GoogleTranslator:
         """
         # 環境変数を読み込み
         load_dotenv()
-        if not os.getenv("GCLOUD_PROJECT_ID"):
-            raise ValueError("Environment variable GCLOUD_PROJECT_ID is not set.\nPlease create a .env file and set GCLOUD_PROJECT_ID='your-project-id'. 環境変数 GCLOUD_PROJECT_ID が設定されていません。\n.env ファイルを作成してください。")
+        
+        # GOOGLE_APPLICATION_CREDENTIALSからproject_idを取得
+        credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+        if not credentials_path:
+            raise ValueError("Environment variable GOOGLE_APPLICATION_CREDENTIALS is not set.\nPlease set GOOGLE_APPLICATION_CREDENTIALS to the path of your Google Cloud credentials JSON file. 環境変数 GOOGLE_APPLICATION_CREDENTIALS が設定されていません。\nGoogle Cloud認証情報JSONファイルのパスを設定してください。")
+        
+        try:
+            with open(credentials_path, 'r', encoding='utf-8') as f:
+                credentials_data = json.load(f)
+                self.project_id = credentials_data.get('project_id')
+                if not self.project_id:
+                    raise ValueError("project_id not found in credentials file. 認証情報ファイルにproject_idが見つかりません。")
+        except FileNotFoundError:
+            raise ValueError(f"Credentials file not found: {credentials_path}. 認証情報ファイルが見つかりません: {credentials_path}")
+        except json.JSONDecodeError:
+            raise ValueError(f"Invalid JSON in credentials file: {credentials_path}. 認証情報ファイルのJSONが無効です: {credentials_path}")
+        except Exception as e:
+            raise ValueError(f"Error reading credentials file: {e}. 認証情報ファイルの読み込みエラー: {e}")
         
         self.client = translate.TranslationServiceClient()
-
-        self.project_id = os.getenv("GCLOUD_PROJECT_ID")
 
         self.parent = f"projects/{self.project_id}/locations/global"
         self.from_language = from_language

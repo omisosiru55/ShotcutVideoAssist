@@ -5,5 +5,4 @@ __pycache__/
 dist/
 build/
 .pytest_cache/
-.env
 .vscode

@@ -17,7 +17,7 @@ class GUIApp:
         self.root = root
         self.root.title("Shotcut MLT Toolbox")
         self.root.configure(bg=BG_COLOR)
-        self.root.geometry("500x500")
+        self.root.geometry("600x500")
 
         # ===== Processing Options Area =====
         frame_choices = tk.LabelFrame(root, text="Processing Options / 処理オプション", padx=10, pady=10, bg=BG_COLOR, fg=FG_COLOR)
@@ -78,6 +78,39 @@ class GUIApp:
         to_lang_combo = ttk.Combobox(to_lang_frame, textvariable=self.translate_to_var, width=15, state="readonly")
         to_lang_combo['values'] = ('en', 'ja', 'fr', 'de', 'es', 'it', 'pt', 'ru', 'zh', 'ko', 'ar', 'hi', 'th', 'vi')
         to_lang_combo.pack(side="left")
+
+        # Translation Service
+        service_frame = tk.Frame(self.translation_frame, bg=BG_COLOR)
+        service_frame.pack(anchor="w", pady=(5, 0))
+        tk.Label(service_frame, text="Translation Service / 翻訳サービス", fg=FG_COLOR, bg=BG_COLOR).pack(side="left", padx=(0, 10))
+        
+        self.translate_service_var = tk.StringVar(value="Libre")
+        service_combo = ttk.Combobox(service_frame, textvariable=self.translate_service_var, width=15, state="readonly")
+        service_combo['values'] = ('Libre', 'google')
+        service_combo.pack(side="left")
+        # 翻訳サービス変更時のイベントハンドラーを追加
+        service_combo.bind('<<ComboboxSelected>>', self.on_service_change)
+
+        # Credentials File (initially hidden)
+        self.credentials_frame = tk.Frame(self.translation_frame, bg=BG_COLOR)
+        # 初期状態では非表示
+        
+        # ラベルを追加
+        tk.Label(self.credentials_frame, text="Credentials File / クレデンシャルファイル", fg=FG_COLOR, bg=BG_COLOR).pack(anchor="w", pady=(0, 2))
+        
+        # ファイル選択部分
+        credentials_input_frame = tk.Frame(self.credentials_frame, bg=BG_COLOR)
+        credentials_input_frame.pack(fill="x")
+        
+        self.credentials_path_var = tk.StringVar()
+        tk.Entry(credentials_input_frame, textvariable=self.credentials_path_var, width=40).pack(side="left", padx=(0, 5))
+        tk.Button(credentials_input_frame, text="Browse / 参照", bg=BTN_COLOR, fg=FG_COLOR, command=self.browse_credentials).pack(side="left")
+
+        # Service Description
+        desc_frame = tk.Frame(self.translation_frame, bg=BG_COLOR)
+        desc_frame.pack(anchor="w", pady=(5, 0))
+        tk.Label(desc_frame, text="Libre: Quality moderate, free / 質はほどほど、無料", fg=FG_COLOR, bg=BG_COLOR, font=("Arial", 8)).pack(anchor="w")
+        tk.Label(desc_frame, text="Google: High quality, requires your own credentials / 質は良いがクレデンシャルは自分で取得", fg=FG_COLOR, bg=BG_COLOR, font=("Arial", 8)).pack(anchor="w")
 
 
         # ===== File Selection Area =====
@@ -169,10 +202,29 @@ class GUIApp:
                 # 翻訳フレーム以外のフレーム（折り返しオプション）は表示
                 widget.pack(anchor="w", pady=(5, 0))
 
+    def on_service_change(self, event=None):
+        """翻訳サービス変更時の処理"""
+        service = self.translate_service_var.get()
+        if service == "google":
+            # Google選択時はクレデンシャルファイル選択を表示
+            self.credentials_frame.pack(anchor="w", pady=(5, 0))
+        else:
+            # その他の選択時は非表示
+            self.credentials_frame.pack_forget()
+
     def browse_file(self):
         file_path = filedialog.askopenfilename(filetypes=[("MLT files", "*.mlt")])
         if file_path:
             self.input_path_var.set(file_path)
+
+    def browse_credentials(self):
+        """クレデンシャルファイルを選択"""
+        file_path = filedialog.askopenfilename(
+            title="Select Credentials File / クレデンシャルファイルを選択",
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
+        )
+        if file_path:
+            self.credentials_path_var.set(file_path)
 
     def run(self):
         choice = self.wrap_choice_var.get()
@@ -186,7 +238,7 @@ class GUIApp:
         """ローカル処理（既存の機能）"""
         load_dotenv()
         if not os.getenv("GCLOUD_PROJECT_ID"):
-            messagebox.showerror("エラー", "環境変数 GCLOUD_PROJECT_ID が設定されていません。\n.env ファイルを作成してください。")
+            messagebox.showerror("Error エラー", "Environment variable GCLOUD_PROJECT_ID is not set.\nPlease create a .env file and set GCLOUD_PROJECT_ID='your-project-id'. 環境変数 GCLOUD_PROJECT_ID が設定されていません。\n.env ファイルを作成してください。")
             return
 
         try:
@@ -198,7 +250,13 @@ class GUIApp:
             elif choice == "wrap_dynamictext":
                 editor.wrap_dynamictext_lines(max_length=self.wrap_max_length_var.get(), force_wrap=self.force_wrap_var.get())
             elif choice == "translate_dynamictext":
-                editor.translate_dynamictext(from_lang=self.translate_from_var.get(), to_lang=self.translate_to_var.get())
+                credentials_path = self.credentials_path_var.get() if self.translate_service_var.get() == "google" else None
+                editor.translate_dynamictext(
+                    from_lang=self.translate_from_var.get(), 
+                    to_lang=self.translate_to_var.get(), 
+                    service=self.translate_service_var.get(),
+                    credentials_path=credentials_path
+                )
 
             editor.save()
             messagebox.showinfo("完了", "処理が完了しました！")

@@ -11,7 +11,7 @@ from typing import Optional, Dict, Tuple, Union
 import zipfile
 
 from .subtitle_utils import SubtitleUtils
-from .translator import GoogleTranslator
+from .translator import GoogleTranslator, LibreTranslator
 from .exceptions import (
     MLTFileNotFoundError,
     MLTParseError,
@@ -153,11 +153,14 @@ class MLTEditor:
         return wrapped_count
 
     # dynamictextを翻訳する / translate dynamictext
-    def translate_dynamictext(self, from_lang: str = 'en', to_lang: str = 'fr') -> int:
+    def translate_dynamictext(self, from_lang: str = 'en', to_lang: str = 'fr', service: str = 'Libre') -> int:
 
         self.set_output_path(f"translated{from_lang}to{to_lang}")
 
-        translator = GoogleTranslator(from_language=from_lang, target_language=to_lang)
+        if service == 'Libre':
+            translator = LibreTranslator(from_language=from_lang, target_language=to_lang)
+        else:
+            translator = GoogleTranslator(from_language=from_lang, target_language=to_lang)
 
         translated_count = 0
         for producer in self.mlt_tag.findall("producer"):

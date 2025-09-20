@@ -1,7 +1,7 @@
 from google.cloud import translate
 import os
 
-class MLTTranslator:
+class GoogleTranslator:
     def __init__(self, from_language="auto", target_language="en", max_translations=1000):
         """
         from_language: 翻訳元の言語（'auto'で自動検出）

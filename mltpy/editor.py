@@ -11,7 +11,7 @@ from typing import Optional, Dict, Tuple, Union
 import zipfile
 
 from .subtitle_utils import SubtitleUtils
-from .translator import MLTTranslator
+from .translator import GoogleTranslator
 from .exceptions import (
     MLTFileNotFoundError,
     MLTParseError,
@@ -157,7 +157,7 @@ class MLTEditor:
 
         self.set_output_path(f"translated{from_lang}to{to_lang}")
 
-        translator = MLTTranslator(from_language=from_lang, target_language=to_lang)
+        translator = GoogleTranslator(from_language=from_lang, target_language=to_lang)
 
         translated_count = 0
         for producer in self.mlt_tag.findall("producer"):

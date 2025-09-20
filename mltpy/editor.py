@@ -11,7 +11,7 @@ from typing import Optional, Dict, Tuple, Union
 import zipfile
 
 from .subtitle_utils import SubtitleUtils
-from .gcloud_translate import MLTTranslator
+from .translator import MLTTranslator
 from .exceptions import (
     MLTFileNotFoundError,
     MLTParseError,

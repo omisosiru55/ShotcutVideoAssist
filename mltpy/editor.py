@@ -9,9 +9,10 @@ from lxml import etree
 import re
 from typing import Optional, Dict, Tuple, Union
 import zipfile
+from translate import Translator
 
 from .subtitle_utils import SubtitleUtils
-from .translator import GoogleTranslator, LibreTranslator
+from .translator import GoogleTranslator
 from .exceptions import (
     MLTFileNotFoundError,
     MLTParseError,
@@ -157,8 +158,8 @@ class MLTEditor:
 
         self.set_output_path(f"translated{from_lang}to{to_lang}")
 
-        if service == 'Libre':
-            translator = LibreTranslator(from_language=from_lang, target_language=to_lang)
+        if service == 'Translate':
+            translator = Translator(from_lang=from_lang, to_lang=to_lang)
         else:
             translator = GoogleTranslator(from_language=from_lang, target_language=to_lang)
 
@@ -168,7 +169,10 @@ class MLTEditor:
                 if filter_elem.get("mlt_service") == "dynamictext" or filter_elem.find("property[@name='mlt_service']").text == "dynamictext":
                     for prop in filter_elem.findall("property[@name='argument']"):
                         original = prop.text
-                        translated = translator.translate_text(original)
+                        if service == 'Translate':
+                            translated = translator.translate(original)
+                        else:
+                            translated = translator.translate_text(original)
                         prop.text = translated
                         translated_count += 1
                         print(f"Translated dynamictext: {original} -> {translated}")

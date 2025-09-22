@@ -83,9 +83,9 @@ class GUIApp:
         service_frame.pack(anchor="w", pady=(5, 0))
         tk.Label(service_frame, text="Translation Service / 翻訳サービス", fg=FG_COLOR, bg=BG_COLOR).pack(side="left", padx=(0, 10))
         
-        self.translate_service_var = tk.StringVar(value="Libre")
+        self.translate_service_var = tk.StringVar(value="Translate")
         service_combo = ttk.Combobox(service_frame, textvariable=self.translate_service_var, width=15, state="readonly")
-        service_combo['values'] = ('Libre', 'google')
+        service_combo['values'] = ('Translate', 'google')
         service_combo.pack(side="left")
         # 翻訳サービス変更時のイベントハンドラーを追加
         service_combo.bind('<<ComboboxSelected>>', self.on_service_change)
@@ -108,7 +108,7 @@ class GUIApp:
         # Service Description
         desc_frame = tk.Frame(self.translation_frame, bg=BG_COLOR)
         desc_frame.pack(anchor="w", pady=(5, 0))
-        tk.Label(desc_frame, text="Libre: Quality moderate, free / 質はほどほど、無料", fg=FG_COLOR, bg=BG_COLOR, font=("Arial", 8)).pack(anchor="w")
+        tk.Label(desc_frame, text="Translate: Quality moderate, free / 質はほどほど、無料", fg=FG_COLOR, bg=BG_COLOR, font=("Arial", 8)).pack(anchor="w")
         tk.Label(desc_frame, text="Google: High quality, requires your own credentials / 質は良いがクレデンシャルは自分で取得", fg=FG_COLOR, bg=BG_COLOR, font=("Arial", 8)).pack(anchor="w")
 
 
@@ -259,15 +259,15 @@ class GUIApp:
                 )
 
             editor.save()
-            messagebox.showinfo("完了", "処理が完了しました！")
+            messagebox.showinfo("Complate 完了", "Process completed! 処理が完了しました！")
 
         except Exception as e:
-            messagebox.showerror("エラー", str(e))
+            messagebox.showerror("Error", str(e))
 
     def run_cloud_rendering(self):
         """クラウドレンダリング処理"""
         if not self.input_path_var.get():
-            messagebox.showerror("エラー", "ファイルを選択してください。")
+            messagebox.showerror("Error", "Choose a file. ファイルを選択してください。")
             return
 
         # 進捗表示をリセット
@@ -306,14 +306,14 @@ class GUIApp:
                         # ポーリング開始（キュー待機状態も含む）
                         self.start_polling()
                     else:
-                        self.root.after(0, lambda: messagebox.showerror("エラー", "アップロードレスポンスにunique_idが含まれていません"))
+                        self.root.after(0, lambda: messagebox.showerror("Error", "アップロードレスポンスにunique_idが含まれていません"))
                 except Exception as e:
-                    self.root.after(0, lambda: messagebox.showerror("エラー", f"アップロードレスポンスの解析に失敗: {e}"))
+                    self.root.after(0, lambda: messagebox.showerror("Error", f"アップロードレスポンスの解析に失敗: {e}"))
             else:
-                self.root.after(0, lambda: messagebox.showerror("エラー", f"アップロードに失敗しました。ステータス: {status}, レスポンス: {text}"))
+                self.root.after(0, lambda: messagebox.showerror("Error", f"アップロードに失敗しました。ステータス: {status}, レスポンス: {text}"))
                 
         except Exception as e:
-            self.root.after(0, lambda: messagebox.showerror("エラー", f"クラウドレンダリング処理中にエラーが発生しました: {e}"))
+            self.root.after(0, lambda: messagebox.showerror("Error", f"クラウドレンダリング処理中にエラーが発生しました: {e}"))
 
     def reset_progress(self):
         """進捗表示をリセット"""
@@ -412,7 +412,7 @@ class GUIApp:
                         self.is_polling = False
                         break
                     elif status == 'error':
-                        self.root.after(0, lambda: messagebox.showerror("エラー", "レンダリング中にエラーが発生しました"))
+                        self.root.after(0, lambda: messagebox.showerror("Error", "レンダリング中にエラーが発生しました"))
                         self.is_polling = False
                         break
                     elif status in ['rendering', 'running', 'processing']:
@@ -425,7 +425,7 @@ class GUIApp:
                         # ポーリングを継続
                         
             except Exception as e:
-                print(f"ポーリングエラー: {e}")
+                print(f"Polling error: {e}")
                 
             time.sleep(2)  # 2秒間隔でポーリング
 

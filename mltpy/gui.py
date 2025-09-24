@@ -308,12 +308,12 @@ class GUIApp:
                     else:
                         self.root.after(0, lambda: messagebox.showerror("Error", "アップロードレスポンスにunique_idが含まれていません"))
                 except Exception as e:
-                    self.root.after(0, lambda: messagebox.showerror("Error", f"アップロードレスポンスの解析に失敗: {e}"))
+                    self.root.after(0, lambda error=e: messagebox.showerror("Error", f"アップロードレスポンスの解析に失敗: {error}"))
             else:
-                self.root.after(0, lambda: messagebox.showerror("Error", f"アップロードに失敗しました。ステータス: {status}, レスポンス: {text}"))
+                self.root.after(0, lambda s=status, t=text: messagebox.showerror("Error", f"アップロードに失敗しました。ステータス: {s}, レスポンス: {t}"))
                 
         except Exception as e:
-            self.root.after(0, lambda: messagebox.showerror("Error", f"クラウドレンダリング処理中にエラーが発生しました: {e}"))
+            self.root.after(0, lambda error=e: messagebox.showerror("Error", f"クラウドレンダリング処理中にエラーが発生しました: {error}"))
 
     def reset_progress(self):
         """進捗表示をリセット"""

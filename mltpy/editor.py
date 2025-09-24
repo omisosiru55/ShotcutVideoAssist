@@ -312,6 +312,12 @@ class MLTEditor:
             if not old_path:
                 continue
 
+            # 数値:で始まる場合（例：2:c:/path, 1.5:c:/path）は先頭の数値部分を削除
+            import re
+            match = re.match(r'^(\d+(?:\.\d)?):(.+)$', old_path)
+            if match:
+                old_path = match.group(2)  # 数値部分を除いた残りを取得
+
             filename = Path(old_path).name
 
             # data/xxx に置き換える

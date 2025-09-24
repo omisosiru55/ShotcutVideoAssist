@@ -138,9 +138,18 @@ class MLTDataPackager:
     def _resolve_resource_path(self, value: str) -> Optional[Path]:
         """resource値がファイルパスであれば絶対Pathを返し、そうでなければNone。"""
         text = value.strip().strip('"')
+        
         # 変数やURLスキームは除外
         if "://" in text:
             return None
+        
+        # 数値:で始まる場合（例：2:c:/path, 1.5:c:/path）は先頭の数値部分を削除
+        import re
+        # 整数または小数点第1位までの数値で始まる場合をマッチ
+        match = re.match(r'^(\d+(?:\.\d)?):(.+)$', text)
+        if match:
+            text = match.group(2)  # 数値部分を除いた残りを取得
+        
         # 絶対パス or 相対パス
         p = Path(text)
         if not p.is_absolute():

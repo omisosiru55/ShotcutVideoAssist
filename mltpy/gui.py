@@ -281,13 +281,15 @@ class GUIApp:
     def _cloud_rendering_worker(self):
         """クラウドレンダリングのワーカースレッド"""
         try:
-            # Status 状態: Uploading アップロード
-            self.root.after(0, lambda: self.update_status("Status 状態: Uploading アップロード"))
             
             # packagerを使用してZIP作成とアップロード
+            self.root.after(0, lambda: self.update_status("Status 状態: Zipping data.zip データをZIP化しています"))
             packager = MLTDataPackager(self.input_path_var.get())
             zip_path = packager.prepare_zip()  # data.zip を生成
-            
+
+            # Status 状態: Uploading アップロード
+            self.root.after(0, lambda: self.update_status("Status 状態: Uploading アップロード"))
+
             # アップロード進捗コールバックを設定
             def upload_progress_callback(progress, uploaded_bytes, total_bytes):
                 self.root.after(0, lambda: self._update_upload_progress(progress, uploaded_bytes, total_bytes))

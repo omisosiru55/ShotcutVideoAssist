@@ -304,6 +304,41 @@ class MLTEditor:
         
         return saved_files
 
+    def modify_qtcrop_color(self) -> int:
+        """
+        qtcropフィルターのcolorプロパティで末尾が00（透明）の場合、
+        最初の6桁をFFFFFF（白）に変更し、stemに_modqtcropを付けて保存する / 
+        For qtcrop filter color properties ending with 00 (transparent), 
+        change first 6 digits to FFFFFF (white) and save with _modqtcrop suffix
+        
+        Returns:
+            int: 変更されたフィルターの数 / Number of modified filters
+        """
+        self.set_output_path("modqtcrop")
+        
+        modified_count = 0
+        
+        # qtcropサービスを持つフィルターを検索 / Search for filters with qtcrop service
+        for filter_elem in self.mlt_tag.findall(".//filter"):
+            # mlt_serviceプロパティを確認 / Check mlt_service property
+            service_elem = filter_elem.find("./property[@name='mlt_service']")
+            if service_elem is not None and service_elem.text == "qtcrop":
+                # 同じフィルター内のcolorプロパティを検索 / Search for color property in same filter
+                color_elem = filter_elem.find("./property[@name='color']")
+                if color_elem is not None and color_elem.text and color_elem.text.endswith("00"):
+                    # 最後の2桁が00（透明）の場合、最初の6桁をFFFFFF（白）に変更 / If last 2 digits are 00 (transparent), change first 6 digits to FFFFFF (white)
+                    original_color = color_elem.text
+                    color_elem.text = "#FFFFFFFF"
+                    modified_count += 1
+                    print(f"Modified qtcrop filter color: {filter_elem.get('id', 'unknown')} - {original_color} -> #FFFFFFFF")
+        
+        if modified_count == 0:
+            print("No qtcrop filters with transparent color (ending with 00) found. / 透明色（末尾が00）を持つqtcropフィルターが見つかりませんでした。")
+        else:
+            print(f"Total qtcrop filters modified: {modified_count} / 変更されたqtcropフィルターの総数: {modified_count}")
+        
+        return modified_count
+
     # レンダリングサービス用メソッド群 / methods for rendering services
     def modify_resource_directory(self):
         # resource プロパティを全て探す

@@ -52,6 +52,12 @@ class CLIParser:
         )
 
         parser.add_argument(
+            '--modify-qtcrop-color',
+            action='store_true',
+            help='Modify qtcrop filter color to white / qtcropフィルターのcolorプロパティを白に変更する'
+        )
+
+        parser.add_argument(
             '--data-dir',
             type=str,
             default=r'C:\data',
@@ -103,6 +109,9 @@ class CLIApp:
 
         if self.args.translate_dynamictext:
             editor.translate_dynamictext(from_lang=self.args.translate_from, to_lang=self.args.translate_to)
+
+        if self.args.modify_qtcrop_color:
+            editor.modify_qtcrop_color()
 
         if self.args.cloud_render:
             packager = MLTDataPackager(self.args.input_path)
